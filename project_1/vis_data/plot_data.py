@@ -18,13 +18,11 @@ fig,ax = plt.subplots()
 ax.plot(year2, pressure, 'b--', linewidth = 1, label='Pressure in well')
 # Set the y-axis label
 ax.set_ylabel("Pressure MPa",color="black",fontsize=10)
-
 #create second y-axis
 ax2=ax.twinx()
 ax2.plot(year1, co2, color='r', label='CO2 injection rate')
 # Set the y-axis label
 ax2.set_ylabel('CO2 injection rate kg/s',color="r",fontsize=10)
-
 ax.set_xlabel('Time (year)',fontsize=10)
 ax.set_title('Pressure vs CO2 Injection rate\n')
 fig.legend()
@@ -40,7 +38,7 @@ ax.set_ylabel("Pressure MPa",color="black",fontsize=10)
 
 #create second y-axis
 ax2=ax.twinx()
-ax2.plot(year3, production, color='r', label='CO2 injection rate')
+ax2.plot(year3, production, color='r', label='Production Rate')
 # Set the y-axis label
 ax2.set_ylabel('Production Rate kg/s',color="red",fontsize=10)
 
