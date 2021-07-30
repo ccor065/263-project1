@@ -27,8 +27,8 @@ ax2.set_ylabel('CO2 injection rate kg/s',color="r",fontsize=10)
 
 ax.set_xlabel('Time (year)',fontsize=10)
 ax.set_title('Pressure vs CO2 Injection rate\n')
-plt.savefig('co2-rate_vs_pressure.png',dpi=300)
 fig.legend()
+plt.savefig('co2-rate_vs_pressure.png',dpi=300)
 plt.show()
 
 # Plot pressure vs production rate over time
@@ -47,8 +47,8 @@ ax2.set_ylabel('Production Rate kg/s',color="red",fontsize=10)
 # Set the x-axis label
 ax.set_xlabel('Time (year)',fontsize=10)
 ax.set_title('Pressure vs Production Rate \n')
-plt.savefig('production-rate_vs_pressure.png',dpi=300)
 fig.legend()
+plt.savefig('production-rate_vs_pressure.png',dpi=300)
 plt.show()
 
 # Plot pressure vs CO2 wt%
@@ -65,7 +65,6 @@ ax2.plot(year4, co2_wt, color='r', label='CO2 wt%')
 ax2.set_ylabel('CO2wt% ',color="red",fontsize=10)
 ax.set_xlabel('Time (year)',fontsize=10)
 ax.set_title('Pressure vs CO2wt%\n')
-plt.savefig('co2wt_vs_pressure.png',dpi=300)
 fig.legend()
-
+plt.savefig('co2wt_vs_pressure.png',dpi=300)
 plt.show()
