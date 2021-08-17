@@ -6,7 +6,7 @@ from scipy.optimize import curve_fit
 
 # Define global variables
 TIME, PRESSURE = np.genfromtxt('cs_p.txt',delimiter=',',skip_header=1).T
-STEP = 0.25
+STEP = 1
 
 
 def load_production_data():
@@ -258,7 +258,7 @@ def plot_pressure_benchmark():
     '''
     # find correct parameters for a,b and c to fit the model well
     a, b, c = find_pars()
-    step = 1
+    step = 0.001
     # solve ode using found parameaters
     t_ode, p_ode = solve_pressure_ode(pressure_ode_model, TIME[0], PRESSURE[0], TIME[-1], step, pars = [a, b, c])
     #### Benchmark numerical(ode) solution against analytical solution
@@ -274,6 +274,26 @@ def plot_pressure_benchmark():
     plt.plot(t_ode, p_ode, color = 'r', label = 'ODE')
     plt.legend()
     plt.show()
+
+    ######### Convergence Analysis
+    step_nums = np.linspace(0.001, 5, 100)
+    p_at2000 = np.zeros(len(step_nums))
+
+    for i in range(len(step_nums)):
+        t, p = solve_pressure_ode(pressure_ode_model, TIME[0], PRESSURE[0], 2000, step_nums[i], pars = [a, b, c])
+        p_at2000[i] = p[-1]
+
+    plt.scatter(step_nums, p_at2000, color = 'r', label = "Pressure at time = 2000")
+    plt.xlim (0, max(step_nums))
+    #Lables axis and give a tite
+    plt.xlabel('Step Size')
+    plt.ylabel('pressure value at time = 2000')
+    plt.title('Convergence analysis for step size for p(t=2000) and h = 0.1 - 30 ')
+    # Display legend and graph
+    plt.legend()
+    plt.show()
     return
+
 if __name__ == "__main__":
     plot_pressure_benchmark()
+    plot_convergence()
