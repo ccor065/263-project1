@@ -258,7 +258,7 @@ def plot_pressure_benchmark():
     '''
     # find correct parameters for a,b and c to fit the model well
     a, b, c = find_pars()
-    step = 0.001
+    step = 0.1
     # solve ode using found parameaters
     t_ode, p_ode = solve_pressure_ode(pressure_ode_model, TIME[0], PRESSURE[0], TIME[-1], step, pars = [a, b, c])
     #### Benchmark numerical(ode) solution against analytical solution
@@ -292,8 +292,24 @@ def plot_pressure_benchmark():
     # Display legend and graph
     plt.legend()
     plt.show()
+
+
+    ##### Misfit
+    misfit = np.zeros(len(p_ode))
+    nt = int(np.ceil((TIME[-1]-TIME[0])/0.1))		# compute number of Euler steps to take
+    ts = TIME[0]+np.arange(nt+1)*0.1			# x array
+    p_data_interp = np.interp(ts, TIME, PRESSURE)
+
+    for i in range(len(p_data_interp)):
+        misfit[i] = math.sqrt((p_ode[i] - p_data_interp[i])**2)
+
+    plt.scatter(ts, misfit)
+    plt.ylabel('RMS Misfit',fontsize=10)
+    plt.xlabel('Time',fontsize=10)
+
+    plt.title('Root Mean Sqaured Misfit')
+    plt.show()
     return
 
 if __name__ == "__main__":
     plot_pressure_benchmark()
-    plot_convergence()
