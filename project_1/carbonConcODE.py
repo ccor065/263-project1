@@ -4,7 +4,7 @@ import math
 from scipy.optimize import curve_fit
 
 TIME, CONC = np.genfromtxt('cs_cc.txt',delimiter=',',skip_header=1).T
-TIME_P, PRESSURE = np.genfromtxt('cs_p.txt',delimiter=',',skip_header=1).T
+TIME_P, PRESSURE = np.genfromtxt('pressureOdeModel.csv',delimiter=',',skip_header=1).T
 STEP = 0.1
 
 def load_pressure_data():
@@ -256,6 +256,10 @@ def plot_conc_model():
 
     t_model, c = solve_conc_ode(conc_ODE_model, TIME[0], CONC[0], TIME[-1], step, [a, d, m0, PRESSURE[0], c0])
 
+    modelToSave = np.array([t_model, c])
+    modelToSave = modelToSave.T
+    np.savetxt("concOdeModel.csv", modelToSave, fmt='%.2f,%.4f', header = 't_ode, c_ode')
+
     plt.plot(t_model, c, label = "ode model")
     plt.plot(TIME, CONC, 'o', label='data')
     plt.legend()
@@ -264,3 +268,8 @@ def plot_conc_model():
 
 if __name__ == "__main__":
     plot_conc_model()
+
+
+    modelToSave = np.array([t_ode, p_ode])
+    modelToSave = modelToSave.T
+    np.savetxt("pressureOdeModel.csv", modelToSave, fmt='%.2f,%.4f', header = 't_ode, p_ode')
