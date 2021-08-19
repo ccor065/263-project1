@@ -258,6 +258,7 @@ def plot_pressure_benchmark():
     # plot the model solution
     plt.plot(t_ode, p_ode, color = 'r', label = 'ODE')
     plt.legend()
+    plt.savefig('pressureModel_vs_data.png',dpi=300)
     plt.show()
 
     ######### Convergence Analysis
@@ -276,6 +277,7 @@ def plot_pressure_benchmark():
     plt.title('Convergence analysis for step size for p(t=2000) and h = 0.1 - 30 ')
     # Display legend and graph
     plt.legend()
+    plt.savefig('ConvergenceAnalysis_pressureModel.png',dpi=300)
     plt.show()
 
 
@@ -293,6 +295,7 @@ def plot_pressure_benchmark():
     plt.xlabel('Time',fontsize=10)
 
     plt.title('Root Mean Sqaured Misfit')
+    plt.savefig('misfitModel_vs_data',dpi=300)
     plt.show()
     return
 
