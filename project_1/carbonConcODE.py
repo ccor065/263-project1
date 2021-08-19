@@ -241,9 +241,10 @@ def find_pars():
     c0 = 0.02 
     pars = [a, d, m0, c0]
     # make input pressure same length as the output from the solver
-    pi = np.interp(ts, TIME, CONC)
+    ci = np.interp(ts, TIME, CONC)
     # find parameters
-    parameters, covar = curve_fit(curve_fit_conc, ts, pi, pars)
+    trainingSize = math.ceil(0.8*len(ts))
+    parameters, covar = curve_fit(curve_fit_conc, ts[0:trainingSize], ci[0:trainingSize + 1], pars)
     return parameters[0], parameters[1], parameters[2], parameters[3]
 
 def plot_conc_model():
