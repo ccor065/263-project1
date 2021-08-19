@@ -268,8 +268,3 @@ def plot_conc_model():
 
 if __name__ == "__main__":
     plot_conc_model()
-
-
-    modelToSave = np.array([t_ode, p_ode])
-    modelToSave = modelToSave.T
-    np.savetxt("pressureOdeModel.csv", modelToSave, fmt='%.2f,%.4f', header = 't_ode, p_ode')
