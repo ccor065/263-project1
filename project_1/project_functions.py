@@ -124,7 +124,8 @@ def find_pars():
     # make input pressure same length as the output from the solver
     pi = np.interp(ts, TIME, PRESSURE)
     # find parameters
-    parameters, covar = curve_fit(curve_fit_pressure, ts, pi, pars)
+    trainingSize = math.ceil(0.8*len(ts))
+    parameters, covar = curve_fit(curve_fit_pressure, ts[0:trainingSize], pi[0:trainingSize], pars)
     return parameters[0], parameters[1], parameters[2]
 def improved_euler_step(f, tk, yk, h, y0, q, dq, pars):
 	""" Compute an Improved euler step
