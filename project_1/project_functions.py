@@ -11,11 +11,9 @@ STEP = 1
 
 def load_production_data():
     ''' Returns time and production measurements from the Ohaaki geothermal field.
-
         Parameters:
         -----------
         none
-
         Returns:
         --------
         time : array-like
@@ -28,11 +26,9 @@ def load_production_data():
     return time, q
 def load_injection_data():
     ''' Returns time and C02 injection measurements from the t Ohaaki geothermal field.
-
         Parameters:
         -----------
         none
-
         Returns:
         --------
         time : array-like
@@ -46,12 +42,10 @@ def load_injection_data():
 def get_vals(t):
     '''
     Returns net flow rate (q) and dq/dt for number of points as in vector input, t.
-
     Parameters:
     -----------
     t : array-like
         vector of time points
-
     Returns:
     --------
     q : array-like
@@ -82,7 +76,6 @@ def get_vals(t):
 def curve_fit_pressure(t, a, b, c):
     '''
     Returns time and C02 injection measurements from the t Ohaaki geothermal field.
-
     Parameters:
     -----------
     t : array-like
@@ -93,7 +86,6 @@ def curve_fit_pressure(t, a, b, c):
         value of parameter a to check
     c : float
         value of parameter a to check
-
     Returns:
     --------
     pressureODE : array-like
@@ -107,7 +99,6 @@ def curve_fit_pressure(t, a, b, c):
 def find_pars():
     '''
     Returns time and C02 injection measurements from the t Ohaaki geothermal field.
-
     Parameters:
     -----------
     t : array-like
@@ -118,7 +109,6 @@ def find_pars():
         value of parameter a to check
     c : float
         value of parameter a to check
-
     Returns:
     --------
     pressureODE : array-like
@@ -138,7 +128,6 @@ def find_pars():
     return parameters[0], parameters[1], parameters[2]
 def improved_euler_step(f, tk, yk, h, y0, q, dq, pars):
 	""" Compute an Improved euler step
-
 		Parameters
 		----------
 		f : callable
@@ -155,8 +144,6 @@ def improved_euler_step(f, tk, yk, h, y0, q, dq, pars):
             value of the derivative of net flow dq/dt at given time, t.
 		pars : iterable
 			Optional parameters to pass to derivative function.
-
-
 		Returns
 		-------
 		yk1 : float
@@ -170,7 +157,6 @@ def improved_euler_step(f, tk, yk, h, y0, q, dq, pars):
 	return yk1
 def pressure_ode_model(t, p, p0, q, dq, a, b, c):
     ''' Return the derivative dq/dt at time, t, for given parameters.
-
         Parameters:
         -----------
         t : float
@@ -189,7 +175,6 @@ def pressure_ode_model(t, p, p0, q, dq, a, b, c):
             parameter into ode
         c : float
             parameter into ode
-
         Returns:
         --------
         dqdt : float
@@ -199,7 +184,6 @@ def pressure_ode_model(t, p, p0, q, dq, a, b, c):
 def solve_pressure_ode(f, t0, y0, t1, h, pars=[]):
     """
     Compute solution of the coupled ODE problem using Improved Euler method.
-
 	Parameters
 	----------
 	f : callable
@@ -214,14 +198,12 @@ def solve_pressure_ode(f, t0, y0, t1, h, pars=[]):
 		Step size.
 	pars : iterable
 		Optional parameters to pass into derivative function.
-
 	Returns
 	-------
 	xs : array-like
 		Independent variable at solution.
 	ys : array-like
 		Solution.
-
 	Notes
 	-----
 	Assumes that order of inputs to f is f(x,y,*pars).
@@ -240,19 +222,15 @@ def solve_pressure_ode(f, t0, y0, t1, h, pars=[]):
 def plot_pressure_benchmark():
     '''
     Compare analytical and numerical solutions.
-
     Parameters:
     -----------
     none
-
     Returns:
     --------
     none
-
     Notes:
     ------
     This function called within if __name__ == "__main__":
-
     It should contain commands to obtain analytical and numerical solutions,
     plot these, and either display the plot to the screen or save it to the disk.
     '''
@@ -261,6 +239,13 @@ def plot_pressure_benchmark():
     step = 0.1
     # solve ode using found parameaters
     t_ode, p_ode = solve_pressure_ode(pressure_ode_model, TIME[0], PRESSURE[0], TIME[-1], step, pars = [a, b, c])
+
+    #saves ODE model data to a file to be used elsewhere (eg in concentration ode model)
+    modelToSave = np.array([t_ode, p_ode])
+    modelToSave = modelToSave.T
+    np.savetxt("pressureOdeModel.csv", modelToSave, fmt='%.2f,%.4f', header = 't_ode, p_ode')
+
+
     #### Benchmark numerical(ode) solution against analytical solution
     q, _ = get_vals(t_ode)           # load new flow array
     p_ana = np.zeros(len(q))        # initalise analytical pressure array
