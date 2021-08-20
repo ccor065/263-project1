@@ -297,8 +297,137 @@ def plot_pressure_benchmark():
 
     plt.title('Root Mean Sqaured Misfit')
     plt.savefig('misfitModel_vs_data',dpi=300)
+    plt.legend()
     plt.show()
     return
 
+'''
+MODEL FORECAST
+'''
+def plot_model_predictions():
+    a, b, c = find_pars()
+    pars = [a,b,c]
+    step = 0.1
+
+
+    # model
+    t_ode, p_ode = solve_pressure_ode(pressure_ode_model, TIME[0], PRESSURE[0], TIME[-1], step, pars)
+    # plot the data observations
+    plt.plot(TIME, PRESSURE,color='k', label ='Pressure Observations')
+    # plot the model solution
+    plt.plot(t_ode, p_ode, color = 'r', label = 'ODE')
+
+
+    # Set up paramters for forecast
+    a, b, c = find_pars()
+    pars = [a,b,c]
+    endTime = TIME[-1] + 30
+    nt = int(np.ceil((endTime-TIME[-1])/step))	# compute number of Euler steps to take
+    ts = TIME[-1]+np.arange(nt+1)*step			# x array
+
+
+
+
+    ##### CHANGES
+    # Stay at same production / injection
+    injRate = 1
+    t_1, p_1 = forecast_solve_pressure_ode(pressure_ode_model, injRate, ts[0], PRESSURE[-1], ts[-1], step, pars)
+    plt.plot(t_1, p_1, color = 'g', label = 'Same injection')
+
+    # double injection
+    injRate = 2
+    t_2, p_2 = forecast_solve_pressure_ode(pressure_ode_model, injRate, ts[0], PRESSURE[-1], ts[-1], step, pars)
+    plt.plot(t_2, p_2, color = 'orange', label = 'Double injection')
+
+
+    # halve injection
+    injRate = 0.5
+    t_05, p_05 =forecast_solve_pressure_ode(pressure_ode_model, injRate, ts[0], PRESSURE[-1], ts[-1], step, pars)
+    plt.plot(t_05, p_05, color = 'b', label = 'Halve injection')
+
+
+    # quadruple injection
+    injRate = 4
+    t_4, p_4 = forecast_solve_pressure_ode(pressure_ode_model, injRate, ts[0], PRESSURE[-1], ts[-1], step, pars)
+    plt.plot(t_4, p_4, color = 'cyan', label = 'Quadruple injection')
+
+    # stop injection
+    injRate = 0
+    t_0, p_0 = forecast_solve_pressure_ode(pressure_ode_model, injRate, ts[0], PRESSURE[-1], ts[-1], step, pars)
+    plt.plot(t_0, p_0, color = 'pink', label = 'Stop injection')
+    plt.legend()
+    plt.show()
+    return
+def get_q_different_injection_rate(t, injRate):
+
+    # load in flow rate data
+    t1, q_raw = load_production_data()
+    t2, co2_raw = load_injection_data()
+
+
+    # Interpolate co2 injection and production vectors to have same amount of points
+    # as vector t.
+    production_av = 0
+    for i in range(1,10):
+        print(i)
+        production_av += q_raw[-i]
+    production_av = production_av/9
+
+    injection_av = 0
+    for i in range(1,4):
+        print(i)
+        injection_av += co2_raw[-i]
+    injection_av = (injection_av/3)*injRate
+
+    q = np.zeros(len(t))
+
+    # compute net q
+    for i in range(len(t)):
+        q[i] = production_av - injection_av
+
+    # numerically differniate q
+    dqdt = (np.diff(q)) / (np.diff(t))
+    return q, dqdt
+def forecast_solve_pressure_ode(f, injRate, t0, y0, t1, h, pars=[]):
+    """
+    Compute solution of the coupled ODE problem using Improved Euler method.
+	Parameters
+	----------
+	f : callable
+		Derivative function.
+	t0 : float
+		Initial value of independent variable.
+	y0 : float
+		Initial value of solution.
+	t1 : float
+		Final value of independent variable.
+	h : float
+		Step size.
+	pars : iterable
+		Optional parameters to pass into derivative function.
+	Returns
+	-------
+	xs : array-like
+		Independent variable at solution.
+	ys : array-like
+		Solution.
+	Notes
+	-----
+	Assumes that order of inputs to f is f(x,y,*pars).
+    """
+    # initialise
+    nt = int(np.ceil((t1-t0)/h))		# compute number of Euler steps to take
+    ts = t0+np.arange(nt+1)*h			# x array
+    ys = 0.*ts							# array to store solution
+    ys[0] = y0                          # set intial value
+
+    q, dqdt = get_q_different_injection_rate(ts, injRate)
+
+    for i in range(nt):
+        ys[i+1] = improved_euler_step(f, ts[i], ys[i], h, y0, q[i], dqdt[i], pars)
+    return  ts, ys
+
+
 if __name__ == "__main__":
-    plot_pressure_benchmark()
+    #plot_pressure_benchmark()
+    plot_model_predictions()
