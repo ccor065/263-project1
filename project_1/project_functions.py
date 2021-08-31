@@ -127,7 +127,8 @@ def find_pars():
     # find parameters
     trainingSize = math.ceil(0.8*len(ts))
     parameters, covar = curve_fit(curve_fit_pressure, ts[0:trainingSize], pi[0:trainingSize], pars)
-    return parameters[0], parameters[1], parameters[2]
+    return parameters[0], parameters[1], parameters[2], trainingSize
+
 def improved_euler_step(f, tk, yk, h, y0, q, dq, pars):
 	""" Compute an Improved euler step
 		Parameters
@@ -297,16 +298,16 @@ def plot_pressure_benchmark():
     PLOT DATA vs ODE
     """
     # find correct parameters for a,b and c to fit the model well
-    a, b, c = find_pars()
+    a, b, c, calibrationPoint = find_pars()
     pars = [a,b,c]
-    step = 0.1
     # solve ode using found parameaters
-    t_ode, p_ode = solve_pressure_ode(pressure_ode_model, TIME[0], PRESSURE[0], TIME[-1], step, pars)
+    t_ode, p_ode = solve_pressure_ode(pressure_ode_model, TIME[0], PRESSURE[0], TIME[-1], STEP, pars)
     # save ode to file to use in concentration model
     save_ode_csv(t_ode, p_ode)
     # plot the data observations
     ax1.plot(TIME, PRESSURE,color='k', label =' Observations best fit')
     ax1.scatter(TIME, PRESSURE,color='k', marker = 'x', label ='Observations')
+    ax1.axvline(t_ode[calibrationPoint], linestyle = '--', label = 'Calibration Point')
 
     # plot the model solution
     ax1.plot(t_ode, p_ode, color = 'r', label = 'ODE')
@@ -320,7 +321,7 @@ def plot_pressure_benchmark():
     # get average net production rate
     q = 4
     time = np.linspace(0, 50, 100)
-    t_odeA, p_odeA = solve_pressure_benchmark(pressure_ode_model, time[0], PRESSURE[0], time[-1], step, q, pars)
+    t_odeA, p_odeA = solve_pressure_benchmark(pressure_ode_model, time[0], PRESSURE[0], time[-1], STEP, q, pars)
     p_ana = analytical_solution(time, q, a, b, c)
     ax2.plot(t_odeA, p_odeA, color = 'r', label = 'ODE')
     ax2.scatter(time, p_ana, color = 'b', label = 'Analytical Solution')
@@ -382,15 +383,13 @@ def plot_pressure_benchmark():
     plt.savefig('misfitModel_vs_data',dpi=300)
     plt.show()
 
-
-
     return
 
 '''
 MODEL FORECASTING
 '''
 def plot_model_predictions():
-    a, b, c = find_pars()
+    a, b, c, _ = find_pars()
     pars = [a,b,c]
     step = 0.1
     print(pars)
@@ -404,7 +403,7 @@ def plot_model_predictions():
 
 
     # Set up paramters for forecast
-    a, b, c = find_pars()
+    a, b, c, _ = find_pars()
     pars = [a,b,c]
     endTime = TIME[-1] + 30
     nt = int(np.ceil((endTime-TIME[-1])/step))	# compute number of Euler steps to take
