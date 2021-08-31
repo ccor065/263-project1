@@ -1,12 +1,13 @@
 
 import numpy as np
 from matplotlib import pyplot as plt
+import matplotlib.ticker as mtick
 import math
 from scipy.optimize import curve_fit
 
 # Define global variables
 TIME, PRESSURE = np.genfromtxt('cs_p.txt',delimiter=',',skip_header=1).T
-STEP = 1
+STEP = 0.1
 
 
 def load_production_data():
@@ -39,7 +40,7 @@ def load_injection_data():
 
     time, q_co2 = np.genfromtxt('cs_c.txt',delimiter=',',skip_header=1).T
     return time, q_co2
-def get_vals(t):
+def get_net_flow(t):
     '''
     Returns net flow rate (q) and dq/dt for number of points as in vector input, t.
     Parameters:
@@ -215,11 +216,61 @@ def solve_pressure_ode(f, t0, y0, t1, h, pars=[]):
     ys = 0.*ts							# array to store solution
     ys[0] = y0                          # set intial value
 
-    q, dqdt = get_vals(ts)
+    q, dqdt = get_net_flow(ts)
 
     for i in range(nt):
         ys[i+1] = improved_euler_step(f, ts[i], ys[i], h, y0, q[i], dqdt[i], pars)
     return  ts, ys
+
+def analytical_solution(t, q, a, b, c):
+    #### Benchmark numerical(ode) solution against analytical solution
+    p_ana = np.zeros(len(t))        # initalise analytical pressure array
+    for i in range(len(t)):         # compute analtical solution
+        p_ana[i] = PRESSURE[0] - ((a * q)/b)*(1 - math.exp(-b*t[i]))
+    return p_ana
+
+def solve_pressure_benchmark(f, t0, y0, t1, h, q, pars=[]):
+    """
+    Compute solution of the coupled ODE problem using Improved Euler method.
+	Parameters
+	----------
+	f : callable
+		Derivative function.
+	t0 : float
+		Initial value of independent variable.
+	y0 : float
+		Initial value of solution.
+	t1 : float
+		Final value of independent variable.
+	h : float
+		Step size.
+	pars : iterable
+		Optional parameters to pass into derivative function.
+	Returns
+	-------
+	xs : array-like
+		Independent variable at solution.
+	ys : array-like
+		Solution.
+	Notes
+	-----
+	Assumes that order of inputs to f is f(x,y,*pars).
+    """
+    # initialise
+    nt = int(np.ceil((t1-t0)/h))		# compute number of Euler steps to take
+    ts = t0+np.arange(nt+1)*h			# x array
+    ys = 0.*ts							# array to store solution
+    ys[0] = y0                          # set intial value
+    dqdt = 0                       # ignore dqdt for becnchmark
+
+    for i in range(nt):
+        ys[i+1] = improved_euler_step(f, ts[i], ys[i], h, y0, 4, dqdt, pars)
+
+    return  ts, ys
+def save_ode_csv(t, p):
+    modelToSave = np.array([t, p])
+    modelToSave = modelToSave.T
+    np.savetxt("pressureOdeModel.csv", modelToSave, fmt='%.2f,%.4f', header = 't_ode, p_ode')
 def plot_pressure_benchmark():
     '''
     Compare analytical and numerical solutions.
@@ -235,80 +286,114 @@ def plot_pressure_benchmark():
     It should contain commands to obtain analytical and numerical solutions,
     plot these, and either display the plot to the screen or save it to the disk.
     '''
+
+
+    #find analytical solution
+    fig, (ax1, ax2) = plt.subplots(1, 2)
+    fig.set_figwidth(10)
+    plt.subplots_adjust(None, None, None,None, wspace=0.2, hspace=None)
+
+    """
+    PLOT DATA vs ODE
+    """
     # find correct parameters for a,b and c to fit the model well
     a, b, c = find_pars()
+    pars = [a,b,c]
     step = 0.1
     # solve ode using found parameaters
-    t_ode, p_ode = solve_pressure_ode(pressure_ode_model, TIME[0], PRESSURE[0], TIME[-1], step, pars = [a, b, c])
-
-    #saves ODE model data to a file to be used elsewhere (eg in concentration ode model)
-    modelToSave = np.array([t_ode, p_ode])
-    modelToSave = modelToSave.T
-    np.savetxt("pressureOdeModel.csv", modelToSave, fmt='%.2f,%.4f', header = 't_ode, p_ode')
-
-
-    #### Benchmark numerical(ode) solution against analytical solution
-    q, _ = get_vals(t_ode)           # load new flow array
-    p_ana = np.zeros(len(q))        # initalise analytical pressure array
-    for i in range(len(q)):         # compute analtical solution
-        p_ana[i] = PRESSURE[0] - ((a * q[i])/b)*(1 - math.exp(-b*t_ode[i]))
-    # plot analytical solution
-    #plt.plot(t_ode, p_ana, color = 'b', label = "Analytical Solution")
+    t_ode, p_ode = solve_pressure_ode(pressure_ode_model, TIME[0], PRESSURE[0], TIME[-1], step, pars)
+    # save ode to file to use in concentration model
+    save_ode_csv(t_ode, p_ode)
     # plot the data observations
-    plt.plot(TIME, PRESSURE,color='k', label ='Pressure Observations')
+    ax1.plot(TIME, PRESSURE,color='k', label =' Observations best fit')
+    ax1.scatter(TIME, PRESSURE,color='k', marker = 'x', label ='Observations')
+
     # plot the model solution
-    plt.plot(t_ode, p_ode, color = 'r', label = 'ODE')
-    plt.legend()
-    plt.savefig('pressureModel_vs_data.png',dpi=300)
+    ax1.plot(t_ode, p_ode, color = 'r', label = 'ODE')
+    ax1.set_title('ODE vs Data')
+    ax1.set_ylabel("Pressure(MPa)")
+    ax1.set_xlabel("Year")
+    ax1.legend()
+    """
+    PLOT BENCHMARKING!
+    """
+    # get average net production rate
+    q = 4
+    time = np.linspace(0, 50, 100)
+    t_odeA, p_odeA = solve_pressure_benchmark(pressure_ode_model, time[0], PRESSURE[0], time[-1], step, q, pars)
+    p_ana = analytical_solution(time, q, a, b, c)
+    ax2.plot(t_odeA, p_odeA, color = 'r', label = 'ODE')
+    ax2.scatter(time, p_ana, color = 'b', label = 'Analytical Solution')
+    ax2.set_title('ODE vs Analytical solution')
+    ax2.legend()
+    plt.savefig('model_vs_ODE_analytical.png',dpi=300)
     plt.show()
 
-    ######### Convergence Analysis
-    step_nums = np.linspace(0.001, 5, 100)
-    p_at2000 = np.zeros(len(step_nums))
+    """
+    PLOT Convergence analysis
+    """
+
+    step_nums = np.linspace(0.001, 20, 200)
+    p_at1983 = np.zeros(len(step_nums))
 
     for i in range(len(step_nums)):
-        t, p = solve_pressure_ode(pressure_ode_model, TIME[0], PRESSURE[0], 2000, step_nums[i], pars = [a, b, c])
-        p_at2000[i] = p[-1]
+        t, p = solve_pressure_ode(pressure_ode_model, TIME[0], PRESSURE[0], 1983, step_nums[i], pars = [a, b, c])
+        p_at1983[i] = p[-1]
 
-    plt.scatter(step_nums, p_at2000, color = 'r', label = "Pressure at time = 2000")
-    plt.xlim (0, max(step_nums))
+    fig, (ax1, ax2) = plt.subplots(1,2)
+    ax1.scatter(step_nums, p_at1983, color = 'r')
+    ax1.set_ylabel('Pressure(MPa) at year = 1983')
+    ax1.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2f'))
+    ax1.set_xlabel('Step Size')
+
+    step_nums = np.linspace(0.001, 2, 100)
+    p_at1983 = np.zeros(len(step_nums))
+
+    for i in range(len(step_nums)):
+        t, p = solve_pressure_ode(pressure_ode_model, TIME[0], PRESSURE[0], 1983, step_nums[i], pars = [a, b, c])
+        p_at1983[i] = p[-1]
+    ax2.scatter(step_nums, p_at1983, color = 'r', label = "Pressure(MPa) at x = step size")
+    ax2.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2f'))
+    ax2.set_xlabel('Step Size')
     #Lables axis and give a tite
-    plt.xlabel('Step Size')
-    plt.ylabel('pressure value at time = 2000')
-    plt.title('Convergence analysis for step size for p(t=2000) and h = 0.1 - 30 ')
+    plt.suptitle('Convergence analysis for step size for p(t=1983) and h = 0.001 - 12 ')
     # Display legend and graph
     plt.legend()
     plt.savefig('ConvergenceAnalysis_pressureModel.png',dpi=300)
     plt.show()
 
-
-    ##### Misfit
+    """
+    PLOT RMS misfit between data and ODE
+    """
     misfit = np.zeros(len(p_ode))
-    nt = int(np.ceil((TIME[-1]-TIME[0])/0.1))		# compute number of Euler steps to take
+    nt = int(np.ceil((TIME[-1]-TIME[0])/0.1))	# compute number of points to compare
     ts = TIME[0]+np.arange(nt+1)*0.1			# x array
     p_data_interp = np.interp(ts, TIME, PRESSURE)
 
     for i in range(len(p_data_interp)):
-        misfit[i] = math.sqrt((p_ode[i] - p_data_interp[i])**2)
+        misfit[i] = p_ode[i] - p_data_interp[i]
 
     plt.scatter(ts, misfit)
-    plt.ylabel('RMS Misfit',fontsize=10)
+    plt.axhline(y=0, color = 'black', linestyle = '--')
+    plt.ylabel('Misfit',fontsize=10)
     plt.xlabel('Time',fontsize=10)
 
-    plt.title('Root Mean Sqaured Misfit')
+    plt.title('Misfit ODE vs interploated data')
     plt.savefig('misfitModel_vs_data',dpi=300)
-    plt.legend()
     plt.show()
+
+
+
     return
 
 '''
-MODEL FORECAST
+MODEL FORECASTING
 '''
 def plot_model_predictions():
     a, b, c = find_pars()
     pars = [a,b,c]
     step = 0.1
-
+    print(pars)
 
     # model
     t_ode, p_ode = solve_pressure_ode(pressure_ode_model, TIME[0], PRESSURE[0], TIME[-1], step, pars)
@@ -324,8 +409,6 @@ def plot_model_predictions():
     endTime = TIME[-1] + 30
     nt = int(np.ceil((endTime-TIME[-1])/step))	# compute number of Euler steps to take
     ts = TIME[-1]+np.arange(nt+1)*step			# x array
-
-
 
 
     ##### CHANGES
@@ -369,13 +452,11 @@ def get_q_different_injection_rate(t, injRate):
     # as vector t.
     production_av = 0
     for i in range(1,10):
-        print(i)
         production_av += q_raw[-i]
     production_av = production_av/9
 
     injection_av = 0
     for i in range(1,4):
-        print(i)
         injection_av += co2_raw[-i]
     injection_av = (injection_av/3)*injRate
 
@@ -429,5 +510,5 @@ def forecast_solve_pressure_ode(f, injRate, t0, y0, t1, h, pars=[]):
 
 
 if __name__ == "__main__":
-    #plot_pressure_benchmark()
-    plot_model_predictions()
+    plot_pressure_benchmark()
+    #plot_model_predictions()

@@ -112,7 +112,7 @@ def conc_ODE_model(t, c, q, p, a, d, m0, p0, c0):
         c_alt = c0
 
     #calculates numerical derivative
-    dcdt = (1 - c) * (q / m0) - (a / m0) * (p - p0) * (c_alt - c) - d * (c - c0)
+    dcdt = (1 - c) * (q / m0) - (a/ m0) * (p - p0) * (c_alt - c) - d * (c - c0)
 
     return dcdt
 
@@ -218,7 +218,7 @@ def curve_fit_conc(t, a, d, m0, c0):
 def find_pars():
     '''
     Returns parameters suitable to fit concentration ODE.
-    
+
     Parameters:
     -----------
     Returns:
@@ -235,10 +235,10 @@ def find_pars():
     nt = int(np.ceil((TIME[-1]-TIME[0])/STEP))		# compute number of Euler STEPs to take
     ts = TIME[0]+np.arange(nt+1)*STEP			    # x array
     # initial guesses
-    a = 73.95 
+    a = 73.95
     d = 10 #
-    m0 = 200000 
-    c0 = 0.02 
+    m0 = 200000
+    c0 = 0.02
     pars = [a, d, m0, c0]
     # make input pressure same length as the output from the solver
     ci = np.interp(ts, TIME, CONC)
