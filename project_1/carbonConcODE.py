@@ -235,10 +235,10 @@ def find_pars():
     nt = int(np.ceil((TIME[-1]-TIME[0])/STEP))		# compute number of Euler STEPs to take
     ts = TIME[0]+np.arange(nt+1)*STEP			    # x array
     # initial guesses
-    a = 73.95
-    d = 10 #
-    m0 = 200000
-    c0 = 0.02
+    a = 0.012012 #73.95
+    d = 0.0917764 #10
+    m0 = 11216 #200000
+    c0 = 6.17 #0.02
     pars = [a, d, m0, c0]
     # make input pressure same length as the output from the solver
     ci = np.interp(ts, TIME, CONC)
@@ -252,6 +252,7 @@ def plot_conc_model():
     Plots Concentration Data against ODE model for it
     '''
     a, d, m0, c0 = find_pars()
+    print(a, d, m0, c0)
     print('a={:2.1f}, d={:2.1f}, m0={:2.1f}, c0={:2.1f}'.format(a, d, m0, c0))
     step = 0.1
 

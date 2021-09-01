@@ -4,42 +4,12 @@ from matplotlib import pyplot as plt
 import matplotlib.ticker as mtick
 import math
 from scipy.optimize import curve_fit
+from load_data import *
 
 # Define global variables
-TIME, PRESSURE = np.genfromtxt('cs_p.txt',delimiter=',',skip_header=1).T
+TIME, PRESSURE = load_pressure_data()
 STEP = 0.1
 
-
-def load_production_data():
-    ''' Returns time and production measurements from the Ohaaki geothermal field.
-        Parameters:
-        -----------
-        none
-        Returns:
-        --------
-        time : array-like
-            Vector of time (years) at which measurements were taken.
-        q: : array-like
-            Vector of production measurements kg/s.
-        '''
-
-    time, q= np.genfromtxt('cs_q.txt',delimiter=',',skip_header=1).T
-    return time, q
-def load_injection_data():
-    ''' Returns time and C02 injection measurements from the t Ohaaki geothermal field.
-        Parameters:
-        -----------
-        none
-        Returns:
-        --------
-        time : array-like
-            Vector of time (years) at which measurements were taken.
-        q: : array-like
-            Vector of production measurements kg/s.
-        '''
-
-    time, q_co2 = np.genfromtxt('cs_c.txt',delimiter=',',skip_header=1).T
-    return time, q_co2
 def get_net_flow(t):
     '''
     Returns net flow rate (q) and dq/dt for number of points as in vector input, t.
@@ -63,8 +33,8 @@ def get_net_flow(t):
 
     # Interpolate co2 injection and production vectors to have same amount of points
     # as vector t.
-    q_co2 = np.interp(t, t2, co2_raw)
     q = np.interp(t, t1, q_raw)
+    q_co2 = np.interp(t, t2, co2_raw)
 
     # compute net q
     for i in range(len(t)):
@@ -73,6 +43,7 @@ def get_net_flow(t):
 
     # numerically differniate q
     dqdt = (np.diff(q)) / (np.diff(t))
+
     return q, dqdt
 def curve_fit_pressure(t, a, b, c):
     '''
@@ -97,7 +68,7 @@ def curve_fit_pressure(t, a, b, c):
     timeODE, pressureODE = solve_pressure_ode(pressure_ode_model, t[0], PRESSURE[0], t[-1], STEP, pars)
 
     return pressureODE
-def find_pars():
+def find_pars_pressure():
     '''
     Returns time and C02 injection measurements from the t Ohaaki geothermal field.
     Parameters:
@@ -128,7 +99,6 @@ def find_pars():
     trainingSize = math.ceil(0.8*len(ts))
     parameters, covar = curve_fit(curve_fit_pressure, ts[0:trainingSize], pi[0:trainingSize], pars)
     return parameters[0], parameters[1], parameters[2], trainingSize
-
 def improved_euler_step(f, tk, yk, h, y0, q, dq, pars):
 	""" Compute an Improved euler step
 		Parameters
@@ -222,14 +192,12 @@ def solve_pressure_ode(f, t0, y0, t1, h, pars=[]):
     for i in range(nt):
         ys[i+1] = improved_euler_step(f, ts[i], ys[i], h, y0, q[i], dqdt[i], pars)
     return  ts, ys
-
 def analytical_solution(t, q, a, b, c):
     #### Benchmark numerical(ode) solution against analytical solution
     p_ana = np.zeros(len(t))        # initalise analytical pressure array
     for i in range(len(t)):         # compute analtical solution
         p_ana[i] = PRESSURE[0] - ((a * q)/b)*(1 - math.exp(-b*t[i]))
     return p_ana
-
 def solve_pressure_benchmark(f, t0, y0, t1, h, q, pars=[]):
     """
     Compute solution of the coupled ODE problem using Improved Euler method.
@@ -272,6 +240,13 @@ def save_ode_csv(t, p):
     modelToSave = np.array([t, p])
     modelToSave = modelToSave.T
     np.savetxt("pressureOdeModel.csv", modelToSave, fmt='%.2f,%.4f', header = 't_ode, p_ode')
+def getT_P_ode():
+    # find correct parameters for a,b and c to fit the model well
+    a, b, c, calibrationPoint = find_pars_pressure()
+    pars = [a,b,c]
+    # solve ode using found parameaters
+    t_ode, p_ode = solve_pressure_ode(pressure_ode_model, TIME[0], PRESSURE[0], TIME[-1], STEP, pars)
+    return t_ode, p_ode
 def plot_pressure_benchmark():
     '''
     Compare analytical and numerical solutions.
@@ -298,7 +273,7 @@ def plot_pressure_benchmark():
     PLOT DATA vs ODE
     """
     # find correct parameters for a,b and c to fit the model well
-    a, b, c, calibrationPoint = find_pars()
+    a, b, c, calibrationPoint = find_pars_pressure()
     pars = [a,b,c]
     # solve ode using found parameaters
     t_ode, p_ode = solve_pressure_ode(pressure_ode_model, TIME[0], PRESSURE[0], TIME[-1], STEP, pars)
@@ -389,7 +364,7 @@ def plot_pressure_benchmark():
 MODEL FORECASTING
 '''
 def plot_model_predictions():
-    a, b, c, _ = find_pars()
+    a, b, c, _ = find_pars_pressure()
     pars = [a,b,c]
     step = 0.1
     print(pars)
@@ -403,7 +378,7 @@ def plot_model_predictions():
 
 
     # Set up paramters for forecast
-    a, b, c, _ = find_pars()
+    a, b, c, _ = find_pars_pressure()
     pars = [a,b,c]
     endTime = TIME[-1] + 30
     nt = int(np.ceil((endTime-TIME[-1])/step))	# compute number of Euler steps to take
