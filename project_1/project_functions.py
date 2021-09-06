@@ -416,8 +416,8 @@ def plot_pressure_benchmark():
     """
     
     misfit = np.zeros(len(p_ode))
-    nt = int(np.ceil((TIME[-1]-TIME[0])/0.1))	# compute number of points to compare
-    ts = TIME[0]+np.arange(nt+1)*0.1			# x array
+    nt = int(np.ceil((TIME[-1]-TIME[0])/STEP))	# compute number of points to compare
+    ts = TIME[0]+np.arange(nt+1)*STEP			# x array
     p_data_interp = np.interp(ts, TIME, PRESSURE)
 
     for i in range(len(p_data_interp)):
@@ -428,15 +428,10 @@ def plot_pressure_benchmark():
     plt.ylabel('Misfit',fontsize=10)
     plt.xlabel('Time',fontsize=10)
 
-    plt.title('Misfit ODE vs interploated data')
+    plt.title('Misfit ODE vs interpolated data')
     plt.savefig('misfitModel_vs_data',dpi=300)
     plt.show()
 
-    return
-
-'''
-MODEL FORECASTING
-'''
 def plot_model_predictions():
     a, b, c, _ = find_pars_pressure()
     pars = [a,b,c]
@@ -491,7 +486,6 @@ def get_q_different_injection_rate(t, injRate):
     # load in flow rate data
     t1, q_raw = load_production_data()
     t2, co2_raw = load_injection_data()
-
 
     # Interpolate co2 injection and production vectors to have same amount of points
     # as vector t.
@@ -558,5 +552,5 @@ def forecast_solve_pressure_ode(f, injRate, t0, y0, t1, h, pars=[]):
 
 
 if __name__ == "__main__":
-    plot_pressure_benchmark()
-    #plot_model_predictions()
+    #plot_pressure_benchmark()
+    plot_model_predictions()
