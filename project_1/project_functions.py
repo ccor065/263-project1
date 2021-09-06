@@ -218,7 +218,7 @@ def solve_pressure_ode(f, t0, y0, t1, h, pars=[]):
 def analytical_solution(t, q, a, b, c):
     """
     Computes analytical solution for simplified version of pressure ODE model.
-    Used for bench marking
+    Used for bench marking.
     
     Returns
     -------
@@ -235,7 +235,8 @@ def analytical_solution(t, q, a, b, c):
 def solve_pressure_benchmark(f, t0, y0, t1, h, q, pars=[]):
     """
     Compute solution of the coupled ODE problem using Improved Euler method.
-	Parameters
+	
+    Parameters
 	----------
 	f : callable
 		Derivative function.
@@ -249,13 +250,15 @@ def solve_pressure_benchmark(f, t0, y0, t1, h, q, pars=[]):
 		Step size.
 	pars : iterable
 		Optional parameters to pass into derivative function.
-	Returns
+	
+    Returns
 	-------
 	xs : array-like
 		Independent variable at solution.
 	ys : array-like
 		Solution.
-	Notes
+	
+    Notes
 	-----
 	Assumes that order of inputs to f is f(x,y,*pars).
     """
@@ -265,7 +268,7 @@ def solve_pressure_benchmark(f, t0, y0, t1, h, q, pars=[]):
     ts = t0+np.arange(nt+1)*h			# x array
     ys = 0.*ts							# array to store solution
     ys[0] = y0                          # set intial value
-    dqdt = 0                       # ignore dqdt for becnchmark
+    dqdt = 0                            # ignore dqdt for becnchmark
 
     for i in range(nt):
         ys[i+1] = improved_euler_step(f, ts[i], ys[i], h, y0, 4, dqdt, pars)
@@ -273,28 +276,53 @@ def solve_pressure_benchmark(f, t0, y0, t1, h, q, pars=[]):
     return  ts, ys
 
 def save_ode_csv(t, p):
+    """
+    Saves 2-dimensional dataset to CSV file
+    
+    Parameters
+    ----------
+    t : array-like
+        independent variable of data set.
+    p : array-like
+        dependent variable of data set.
+
+    """
+  
     modelToSave = np.array([t, p])
     modelToSave = modelToSave.T
     np.savetxt("pressureOdeModel.csv", modelToSave, fmt='%.2f,%.4f', header = 't_ode, p_ode')
 
-def getT_P_ode():
-    # find correct parameters for a,b and c to fit the model well
-    a, b, c, calibrationPoint = find_pars_pressure()
-    pars = [a,b,c]
-    # solve ode using found parameaters
-    t_ode, p_ode = solve_pressure_ode(pressure_ode_model, TIME[0], PRESSURE[0], TIME[-1], STEP, pars)
+# def getT_P_ode():
+#     """
+#     Solves pressure ode model with calirbated parameters for best fit
     
-    return t_ode, p_ode
+#     Returns
+#     -------
+#     t_ode : array of ints/double
+#             independent variable values for which ode solution is numerically solved for
+#     p_ode : array of ints/doubles
+#             array of solutiions for pressure ODE model
+#     """
+#     # find correct parameters for a,b and c to fit the model well
+#     a, b, c, calibrationPoint = find_pars_pressure()
+#     pars = [a,b,c]
+#     # solve ode using found parameaters
+#     t_ode, p_ode = solve_pressure_ode(pressure_ode_model, TIME[0], PRESSURE[0], TIME[-1], STEP, pars)
+    
+#     return t_ode, p_ode
 
 def plot_pressure_benchmark():
     '''
     Compare analytical and numerical solutions.
+    
     Parameters:
     -----------
     none
+    
     Returns:
     --------
     none
+    
     Notes:
     ------
     This function called within if __name__ == "__main__":
@@ -302,7 +330,7 @@ def plot_pressure_benchmark():
     plot these, and either display the plot to the screen or save it to the disk.
     '''
 
-    #find analytical solution
+    #Configure plots
     fig, (ax1, ax2) = plt.subplots(1, 2)
     fig.set_figwidth(10)
     plt.subplots_adjust(None, None, None,None, wspace=0.2, hspace=None)
@@ -310,6 +338,7 @@ def plot_pressure_benchmark():
     """
     PLOT DATA vs ODE
     """
+    
     # find correct parameters for a,b and c to fit the model well
     a, b, c, calibrationPoint = find_pars_pressure()
     pars = [a,b,c]
@@ -317,6 +346,7 @@ def plot_pressure_benchmark():
     t_ode, p_ode = solve_pressure_ode(pressure_ode_model, TIME[0], PRESSURE[0], TIME[-1], STEP, pars)
     # save ode to file to use in concentration model
     save_ode_csv(t_ode, p_ode)
+   
     # plot the data observations
     ax1.plot(TIME, PRESSURE,color='k', label =' Observations best fit')
     ax1.scatter(TIME, PRESSURE,color='k', marker = 'x', label ='Observations')
@@ -328,9 +358,11 @@ def plot_pressure_benchmark():
     ax1.set_ylabel("Pressure(MPa)")
     ax1.set_xlabel("Year")
     ax1.legend()
+    
     """
     PLOT BENCHMARKING!
     """
+    
     # get average net production rate
     q = 4
     time = np.linspace(0, 50, 100)
@@ -360,6 +392,7 @@ def plot_pressure_benchmark():
     ax1.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2f'))
     ax1.set_xlabel('Step Size')
 
+    # Compute convergence analysis for step size 0-2 to obtain better visualization    
     step_nums = np.linspace(0.001, 2, 100)
     p_at1983 = np.zeros(len(step_nums))
 
@@ -367,6 +400,7 @@ def plot_pressure_benchmark():
         t, p = solve_pressure_ode(pressure_ode_model, TIME[0], PRESSURE[0], 1983, step_nums[i], pars = [a, b, c])
         p_at1983[i] = p[-1]
     
+    # Plot data points for convergence analyaia
     ax2.scatter(step_nums, p_at1983, color = 'r', label = "Pressure(MPa) at x = step size")
     ax2.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2f'))
     ax2.set_xlabel('Step Size')
