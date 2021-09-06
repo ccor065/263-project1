@@ -188,7 +188,6 @@ def solve_pressure_ode(f, t0, y0, t1, h, pars=[]):
     ys[0] = y0                          # set intial value
 
     q, dqdt = get_net_flow(ts)
-
     for i in range(nt):
         ys[i+1] = improved_euler_step(f, ts[i], ys[i], h, y0, q[i], dqdt[i], pars)
     return  ts, ys
@@ -198,7 +197,7 @@ def analytical_solution(t, q, a, b, c):
     for i in range(len(t)):         # compute analtical solution
         p_ana[i] = PRESSURE[0] - ((a * q)/b)*(1 - math.exp(-b*t[i]))
     return p_ana
-def solve_pressure_benchmark(f, t0, y0, t1, h, q, pars=[]):
+def solve_pressure_const_q(f, t0, y0, t1, h, q, pars=[]):
     """
     Compute solution of the coupled ODE problem using Improved Euler method.
 	Parameters
@@ -230,10 +229,10 @@ def solve_pressure_benchmark(f, t0, y0, t1, h, q, pars=[]):
     ts = t0+np.arange(nt+1)*h			# x array
     ys = 0.*ts							# array to store solution
     ys[0] = y0                          # set intial value
-    dqdt = 0                       # ignore dqdt for becnchmark
+    dqdt = 0                            # ignore dqdt for constant
 
     for i in range(nt):
-        ys[i+1] = improved_euler_step(f, ts[i], ys[i], h, y0, 4, dqdt, pars)
+        ys[i+1] = improved_euler_step(f, ts[i], ys[i], h, y0, q, dqdt, pars)
 
     return  ts, ys
 def save_ode_csv(t, p):
@@ -283,7 +282,8 @@ def plot_pressure_benchmark():
     ax1.plot(TIME, PRESSURE,color='k', label =' Observations best fit')
     ax1.scatter(TIME, PRESSURE,color='k', marker = 'x', label ='Observations')
     ax1.axvline(t_ode[calibrationPoint], linestyle = '--', label = 'Calibration Point')
-
+    q, dq = get_net_flow(t_ode)
+    print(q)
     # plot the model solution
     ax1.plot(t_ode, p_ode, color = 'r', label = 'ODE')
     ax1.set_title('ODE vs Data')
@@ -296,7 +296,7 @@ def plot_pressure_benchmark():
     # get average net production rate
     q = 4
     time = np.linspace(0, 50, 100)
-    t_odeA, p_odeA = solve_pressure_benchmark(pressure_ode_model, time[0], PRESSURE[0], time[-1], STEP, q, pars)
+    t_odeA, p_odeA = solve_pressure_const_q(pressure_ode_model, time[0], PRESSURE[0], time[-1], STEP, q, pars)
     p_ana = analytical_solution(time, q, a, b, c)
     ax2.plot(t_odeA, p_odeA, color = 'r', label = 'ODE')
     ax2.scatter(time, p_ana, color = 'b', label = 'Analytical Solution')
@@ -363,14 +363,25 @@ def plot_pressure_benchmark():
 '''
 MODEL FORECASTING
 '''
+def plot_individual_injRate(t, pars, injRate, color, description):
+        # load in flow rate data
+        t1, q_raw = load_production_data()
+        t2, co2_raw = load_injection_data()
+        # get net flow at final time.
+        q = q_raw[-1] - ((co2_raw[-1])*injRate)
+        print(injRate, ((co2_raw[-1])*injRate))
+        print(q)
+        tp, p = solve_pressure_const_q(pressure_ode_model, t[0], PRESSURE[-1], t[-1], STEP, q, pars)
+        plt.plot(tp, p, color = color, label = description)
+        return
+
 def plot_model_predictions():
+
     a, b, c, _ = find_pars_pressure()
     pars = [a,b,c]
-    step = 0.1
-    print(pars)
 
     # model
-    t_ode, p_ode = solve_pressure_ode(pressure_ode_model, TIME[0], PRESSURE[0], TIME[-1], step, pars)
+    t_ode, p_ode = solve_pressure_ode(pressure_ode_model, TIME[0], PRESSURE[0], TIME[-1], STEP, pars)
     # plot the data observations
     plt.plot(TIME, PRESSURE,color='k', label ='Pressure Observations')
     # plot the model solution
@@ -380,38 +391,22 @@ def plot_model_predictions():
     # Set up paramters for forecast
     a, b, c, _ = find_pars_pressure()
     pars = [a,b,c]
-    endTime = TIME[-1] + 30
-    nt = int(np.ceil((endTime-TIME[-1])/step))	# compute number of Euler steps to take
-    ts = TIME[-1]+np.arange(nt+1)*step			# x array
-
+    endTime = TIME[-1] + 30                     # 30 years projection
+    nt = int(np.ceil((endTime-TIME[-1])/STEP))	# compute number of Euler steps to take
+    ts = TIME[-1]+np.arange(nt+1)*STEP			# x array
 
     ##### CHANGES
-    # Stay at same production / injection
-    injRate = 1
-    t_1, p_1 = forecast_solve_pressure_ode(pressure_ode_model, injRate, ts[0], PRESSURE[-1], ts[-1], step, pars)
-    plt.plot(t_1, p_1, color = 'g', label = 'Same injection')
-
-    # double injection
-    injRate = 2
-    t_2, p_2 = forecast_solve_pressure_ode(pressure_ode_model, injRate, ts[0], PRESSURE[-1], ts[-1], step, pars)
-    plt.plot(t_2, p_2, color = 'orange', label = 'Double injection')
-
-
-    # halve injection
-    injRate = 0.5
-    t_05, p_05 =forecast_solve_pressure_ode(pressure_ode_model, injRate, ts[0], PRESSURE[-1], ts[-1], step, pars)
-    plt.plot(t_05, p_05, color = 'b', label = 'Halve injection')
-
-
-    # quadruple injection
-    injRate = 4
-    t_4, p_4 = forecast_solve_pressure_ode(pressure_ode_model, injRate, ts[0], PRESSURE[-1], ts[-1], step, pars)
-    plt.plot(t_4, p_4, color = 'cyan', label = 'Quadruple injection')
-
     # stop injection
-    injRate = 0
-    t_0, p_0 = forecast_solve_pressure_ode(pressure_ode_model, injRate, ts[0], PRESSURE[-1], ts[-1], step, pars)
-    plt.plot(t_0, p_0, color = 'pink', label = 'Stop injection')
+    plot_individual_injRate(ts, pars, 0,  'orange',  'Stop injection')
+    # halve injection
+    plot_individual_injRate(ts, pars, 0.5,  'b',  'Halve injection')
+    # Stay at same production / injection
+
+    plot_individual_injRate(ts, pars, 1, 'g',  'Same injection')
+    # double injection
+    #plot_individual_injRate(ts, pars, 2,  'orange',  'Double injection')
+    # quadruple injection
+    plot_individual_injRate(ts, pars, 4,  'cyan',  'Quadruple injection')
     plt.legend()
     plt.show()
     return
@@ -420,29 +415,11 @@ def get_q_different_injection_rate(t, injRate):
     # load in flow rate data
     t1, q_raw = load_production_data()
     t2, co2_raw = load_injection_data()
+    # get net flow at final time.
+    q = q_raw[-1] - (co2_raw[-1])
 
 
-    # Interpolate co2 injection and production vectors to have same amount of points
-    # as vector t.
-    production_av = 0
-    for i in range(1,10):
-        production_av += q_raw[-i]
-    production_av = production_av/9
-
-    injection_av = 0
-    for i in range(1,4):
-        injection_av += co2_raw[-i]
-    injection_av = (injection_av/3)*injRate
-
-    q = np.zeros(len(t))
-
-    # compute net q
-    for i in range(len(t)):
-        q[i] = production_av - injection_av
-
-    # numerically differniate q
-    dqdt = (np.diff(q)) / (np.diff(t))
-    return q, dqdt
+    return
 def forecast_solve_pressure_ode(f, injRate, t0, y0, t1, h, pars=[]):
     """
     Compute solution of the coupled ODE problem using Improved Euler method.
@@ -476,13 +453,19 @@ def forecast_solve_pressure_ode(f, injRate, t0, y0, t1, h, pars=[]):
     ys = 0.*ts							# array to store solution
     ys[0] = y0                          # set intial value
 
-    q, dqdt = get_q_different_injection_rate(ts, injRate)
-
+    #q  = get_q_different_injection_rate(ts, injRate)
+    t1, q_raw = load_production_data()
+    t2, co2_raw = load_injection_data()
+    # Interpolate co2 injection and production vectors to have same amount of points
+    # as vector t.
+    q = q_raw[-1] - ((co2_raw[-1])*injRate)
     for i in range(nt):
-        ys[i+1] = improved_euler_step(f, ts[i], ys[i], h, y0, q[i], dqdt[i], pars)
+        ys[i+1] = improved_euler_step(f, ts[i], ys[i], h, y0, q, 0, pars)
     return  ts, ys
 
 
 if __name__ == "__main__":
-    plot_pressure_benchmark()
-    #plot_model_predictions()
+    #plot_pressure_benchmark()
+    a, b, c, _ = find_pars_pressure();
+    print(a, b, c)
+    plot_model_predictions()
