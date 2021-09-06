@@ -1,6 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 import math
+from numpy.core.function_base import linspace
 from scipy.optimize import curve_fit
 from project_functions import *
 from load_data import *
@@ -13,7 +14,6 @@ STEP = 0.1
 def conc_ODE_model(t, c, c0, q, p, p0, a, b, d, m0):
 
     ''' Return the derivative dc/dt at time, t, for given parameters.
-
         Parameters:
         -----------
         t : float
@@ -36,12 +36,10 @@ def conc_ODE_model(t, c, c0, q, p, p0, a, b, d, m0):
             ambient pressure of reservoir
         c0 : float
             ambient value of dependant variable
-
         Returns:
         --------
         dcdt : float
             Derivative of dependent variable with respect to independent variable.
-
     '''
 
     # computes value of c' term (variable name is c_alt)
@@ -83,6 +81,21 @@ def solve_conc_ode(f, t0, y0, t1, h, p0, pars=[]):
             q = 0
         ys[i+1] = improved_euler_step_conc(f, ts[i], ys[i], h, y0, q, p[i], p0, pars)
     return  ts, ys
+def solve_conc_ode_ana(f, t0, y0, t1, h, p0, pars=[]):
+    # initialise
+    nt = int(np.ceil((t1-t0)/h))		# compute number of Euler steps to take
+    ts = t0+np.arange(nt+1)*h			# x array
+    ys = 0.*ts							# array to store solution
+    ys[0] = y0                          # set intial value
+
+    t1, p_raw = load_pressure_data()
+    t2, c02_raw = load_injection_data()
+
+    p = p_raw[0]
+    q = c02_raw[0]
+    for i in range(nt):
+        ys[i+1] = improved_euler_step_conc(f, ts[i], ys[i], h, y0, q, p, p0, pars)
+    return  ts, ys
 def curve_fit_conc(t, d, m0):
     a,b, __,_ = find_pars_pressure()
     pars = [a, b, d, m0]
@@ -117,6 +130,25 @@ def plot_conc_model():
     plt.plot(TIME, CONC, 'o', label='data')
     plt.legend()
     plt.ylim((0, 0.075))
+    plt.show()
+
+    #### Benchmark numerical(ode) solution against analytical solution
+    _, q_co2_raw = load_injection_data()
+    time = linspace(TIME[0], TIME[-1], 200)
+    time = time - TIME[0]
+    c0 = CONC[0]
+    c_ana = np.zeros(len(time))        # initalise analytical pressure array
+    for i in range(len(time)):         # compute analtical solution
+        ki = q_co2_raw[0] / m0
+        Li = (ki * c0 - ki) / (ki + d)
+        c_ana[i] = (ki + d * c0) / (ki + d) + Li / math.exp((ki + d) * time[i])
+    time = time + TIME[0]
+    # plot analytical solution
+    plt.plot(time, c_ana, color = 'b', label = "Analytical Solution")
+    # plot the model solution
+    t_ode, c_ode = solve_conc_ode_ana(conc_ODE_model, TIME[0], 0.03, TIME[-1], STEP, p0, pars)
+    plt.plot(t_ode, c_ode, label = "ode model")
+    plt.legend()
     plt.show()
 
 if __name__ == "__main__":
