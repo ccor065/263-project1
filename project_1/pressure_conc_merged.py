@@ -322,7 +322,7 @@ def plot_individual_injRate(t, injRate, color,  description, plot):
             return
         else:
             return p
-        
+
 def plot_model_predictions():
 
     a, b, c, _ = find_pars_pressure()
@@ -528,7 +528,7 @@ def plot_conc_predictions():
     for i in range(len(injRates)): #loops and plots forcasts for different injection rates
         q = multiply_inj_rate(ts, injRates[i])
         p = plot_individual_injRate(ts, injRates[i], None, None, False)
-        t, c = forecast_solve_conc_ode(conc_ODE_model, injRates[i], ts[0], CONC[-1], ts[-1], STEP, p, pars_conc)
+        t, c = forecast_solve_conc_ode(conc_ODE_model, injRates[i], ts[0], CONC[0], ts[-1], STEP, p, pars_conc)
         plt.plot(t, c, color = colours[i], label = labels[i])
     plt.legend()
     plt.show()

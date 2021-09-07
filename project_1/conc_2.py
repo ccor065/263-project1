@@ -7,7 +7,7 @@ from project_functions import *
 from load_data import *
 
 TIME, CONC = load_c02_wt_data()
-TIME_P, PRESSURE = getT_P_ode()
+TIME_P, PRESSURE = load_pressure_data()
 STEP = 0.1
 ## Concentration Functions
 def conc_ODE_model(t, c, c0, q, p, p0, a, b, d, m0):
