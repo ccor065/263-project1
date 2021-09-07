@@ -9,8 +9,7 @@ from load_data import *
 TIME, CONC = load_c02_wt_data()
 TIME_P, PRESSURE = getT_P_ode()
 STEP = 0.1
-
-
+## Concentration Functions
 def conc_ODE_model(t, c, c0, q, p, p0, a, b, d, m0):
 
     ''' Return the derivative dc/dt at time, t, for given parameters.
@@ -54,9 +53,9 @@ def conc_ODE_model(t, c, c0, q, p, p0, a, b, d, m0):
     q = q - qloss # qCO2 after the loss
 
     return (1-c)*(q/m0) - (b/(a*m0))*(p-p0)*(c_alt-c) - d*(c-c0)
-def improved_euler_step_conc(f, tk, yk, h, y0,q, p, p0, pars=[]):
-	f0 = f(tk, yk, y0, q, p, p0,  *pars)
-	f1 = f(tk +h , yk + h*f0, y0, q, p, p0,  *pars)
+def improved_euler_step_conc(f, tk, yk, h, y0,pars=[]):
+	f0 = f(tk, yk, y0,  *pars)
+	f1 = f(tk +h , yk + h*f0, y0, *pars)
 	yk1 = yk + 0.5*h*(f0 + f1)
 
 	return yk1
@@ -66,20 +65,18 @@ def solve_conc_ode(f, t0, y0, t1, h, p0, pars=[]):
     ts = t0+np.arange(nt+1)*h			# x array
     ys = 0.*ts							# array to store solution
     ys[0] = y0                          # set intial value
-
     t1, p_raw = load_pressure_data()
     t2, c02_raw = load_injection_data()
-
     p = np.interp(ts, t1, p_raw)
     q_arr = np.interp(ts, t2, c02_raw)
-
 
     for i in range(nt):
         if ts[i] >= 1998.51:
             q = q_arr[i]
         else:
             q = 0
-        ys[i+1] = improved_euler_step_conc(f, ts[i], ys[i], h, y0, q, p[i], p0, pars)
+        pars_2 = [q, p[i], p0, *pars]
+        ys[i+1] = improved_euler_step_conc(f, ts[i], ys[i], h, y0, pars_2)
     return  ts, ys
 def solve_conc_ode_ana(f, t0, y0, t1, h, p0, pars=[]):
     # initialise
@@ -118,7 +115,6 @@ def plot_conc_model():
 
     d, m0 = find_pars_conc()
     print(d, m0)
-
     a,b, __,_ = find_pars_pressure()
 
     pars = [a, b, d, m0]

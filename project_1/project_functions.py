@@ -10,6 +10,7 @@ from conc_2 import *
 
 # Define global variables
 TIME, PRESSURE = load_pressure_data()
+TIME_C, CONC = load_c02_wt_data()
 STEP = 0.1
 ## Information collection
 def save_ode_csv(t, p):
@@ -146,7 +147,6 @@ def analytical_solution(t, q, a, b, c):
         p_ana[i] = PRESSURE[0] - ((a * q)/b)*(1 - math.exp(-b*t[i]))
 
     return p_ana
-
 # Solvers
 def pressure_ode_model(t, p, p0, dq, q, c_alt, a, b, c):
     """
@@ -295,70 +295,57 @@ def plot_pressure_benchmark():
     plt.title('Misfit ODE vs interpolated data')
     plt.savefig('misfitModel_vs_data',dpi=300)
     plt.show()
-def plot_individual_injRate(t, injRate, color,  description):
-        # load in flow rate data
-        t1, q_raw = load_production_data()
-        t2, co2_raw = load_injection_data()
-        t3, conc_raw = load_c02_wt_data()
-        q_prod = np.interp(t, t1, q_raw)
-        q_inj = np.interp(t, t2, co2_raw)
-        conc_interp = np.interp(t, t3, conc_raw)
-
-        # get net flow at final time.
-
-        q = q_prod[-1] - (q_inj[-1])*injRate
-
-        # old model
-        #t, p = solve_pressure_const_q(pressure_ode_model, t[0], PRESSURE[0], t[-1], STEP, [q, conc, *pars])
-        d, m0 = find_pars_conc()
-        a,b,c,_ = find_pars_pressure()
-        dq = 0
-        pars_conc = [a, b, d, m0]
-        p = np.zeros(len(t))
-        conc = np.zeros(len(t))
-
-        p[0] = PRESSURE[-1]
-        conc[0] = conc_interp[-1]
-        for i in range(len(t) - 1):
-            p[i+1] = improved_euler_step(pressure_ode_model, t[i], p[i], STEP, PRESSURE[0], [dq, q, conc[i], a, b, c])
-            conc[i+1] = improved_euler_step_conc(conc_ODE_model, t[i],conc[i], STEP, 0.03, q, p[i], PRESSURE[0], pars_conc)
-
-        plt.plot(t, p, color=color,  label =description)
-        return
 def plot_model_predictions():
+    fig, (ax1, ax2) = plt.subplots(1, 2)
 
-    a, b, c, _ = find_pars_pressure()
-    pars = [a,b,c]
+    d, m0 = find_pars_conc()
+    a,b,c,_ = find_pars_pressure()
+    pars_pressure = [a,b, c]
+    pars_conc = [a, b, d, m0]
 
     # model
-    t_ode, p_ode = solve_pressure_ode(pressure_ode_model, TIME[0], PRESSURE[0], TIME[-1], STEP, pars)
+    t_ode, p_ode = solve_pressure_ode(pressure_ode_model, TIME[0], PRESSURE[0], TIME[-1], STEP, pars_pressure)
     # plot the data observations
-    plt.plot(TIME, PRESSURE,color='k', label ='Pressure Observations')
+    ax1.plot(TIME, PRESSURE,color='k', label ='Pressure Observations')
     # plot the model solution
-    plt.plot(t_ode, p_ode, color = 'r', label = 'ODE')
+    ax1.plot(t_ode, p_ode, color = 'r', label = 'ODE')
+    tc_ode, c_ode = solve_conc_ode(conc_ODE_model, TIME_C[0], CONC[0], TIME_C[-1], STEP, PRESSURE[0], pars_conc)
+    ax2.plot(tc_ode, c_ode, label = "ode model")
+    ax2.plot(TIME_C, CONC, 'o', label='data')
 
     # Set up paramters for forecast
-    a, b, c, _ = find_pars_pressure()
-    pars = [a,b,c]
     endTime = TIME[-1] + 30                     # 30 years projection
     nt = int(np.ceil((endTime-TIME[-1])/STEP))	# compute number of Euler steps to take
     ts = TIME[-1]+np.arange(nt+1)*STEP			# x array
-    print(pars)
-    ##### CHANGES
-    # stop injection
-    plot_individual_injRate(ts, 0,  'orange',  'Stop injection')
-    # halve injection
-    plot_individual_injRate(ts, 0.5,  'b',  'Halve injection')
-    # Stay at same production / injection
+    t1, q_raw = load_production_data()
+    t2, co2_raw = load_injection_data()
+    q_prod = np.interp(ts, t1, q_raw)
+    q_inj = np.interp(ts, t2, co2_raw)
 
-    plot_individual_injRate(ts, 1, 'g',  'Same injection')
-    # double injection
-    # quadruple injection
-    plot_individual_injRate(ts, 4,  'cyan',  'Quadruple injection')
+    # stop injection
+    injRates = [0., 0.5, 1., 2., 4.] #different injection rate multipliers
+    colours = ['g', 'orange', 'b', 'cyan', 'pink'] #for graph
+    labels = ['Stop injection', 'Halve injection', 'Same injection', 'Double injection', 'Quadruple injection'] #for graph
+
+    for i in range(len(injRates)):
+        q_net = q_prod[-1] - (q_inj[-1])*injRates[i]
+        t, p, conc = get_p_conc_forecast(ts, pars_conc, pars_pressure, q_net)
+        ax1.plot(t, p, color=colours[i], label = labels[i])
+        ax2.plot(t, conc, color=colours[i], label = labels[i])
+
     #plt.legend()
     plt.show()
     return
+def get_p_conc_forecast(t, pars_conc, pars_pressure, q):
+    dq = 0
+    p = np.zeros(len(t))
+    conc = np.zeros(len(t))
+    p[0] = PRESSURE[-1]
+    conc[0] = CONC[-1]
+    for i in range(len(t) - 1):
+        p[i+1] = improved_euler_step(pressure_ode_model, t[i], p[i], STEP, PRESSURE[0], [dq, q, conc[i], *pars_pressure])
+        conc[i+1] = improved_euler_step_conc(conc_ODE_model, t[i], conc[i], STEP, CONC[0],[ q, p[i], PRESSURE[0], *pars_conc])
+    return t, p, conc
 if __name__ == "__main__":
     #plot_pressure_benchmark()
-
     plot_model_predictions()
