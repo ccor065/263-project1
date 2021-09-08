@@ -91,7 +91,7 @@ def solve_conc_ode_ana(f, t0, y0, t1, h, p0, pars=[]):
     p = p_raw[0]
     q = c02_raw[0]
     for i in range(nt):
-        ys[i+1] = improved_euler_step_conc(f, ts[i], ys[i], h, y0, q, p, p0, pars)
+        ys[i+1] = improved_euler_step_conc(f, ts[i], ys[i], h, y0, [q, p, p0, *pars])
     return  ts, ys
 def curve_fit_conc(t, d, m0):
     a,b, __,_ = find_pars_pressure()

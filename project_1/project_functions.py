@@ -131,6 +131,7 @@ def find_pars_pressure():
     parameters, covariance = curve_fit(curve_fit_pressure, ts[0:trainingSize], pi[0:trainingSize], pars)
 
     return parameters[0], parameters[1], parameters[2], trainingSize
+
 def analytical_solution(t, q, a, b, c):
     """
     Computes analytical solution for simplified version of pressure ODE model.
@@ -148,14 +149,15 @@ def analytical_solution(t, q, a, b, c):
 
     return p_ana
 # Solvers
-def pressure_ode_model(t, p, p0, dq, q, c_alt, a, b, c):
+def pressure_ode_model(t, p, p0, dq, q, conc, a, b, c):
     """
     dgfgdfg
     """
     if p > p0:
-        qloss = b/a *(p-p0)*c_alt*t
+        qloss = (b/a) *(p-p0)*conc*t
+        print(q)
         q = q + qloss
-
+        print(qloss)
     dpdt =  -a*q - b*(p-p0) - c*dq
     return dpdt
 def improved_euler_step(f, tk, yk, h, y0, pars):
@@ -181,7 +183,7 @@ def solve_pressure_const_q(f, t0, y0, t1, h, pars):
     nt = int(np.ceil((t1-t0)/h))		# compute number of Euler steps to take
     ts = t0+np.arange(nt+1)*h			# x array
     ys = 0.*ts							# array to store solution
-    ys[0] = PRESSURE[-1]                         # set intial value
+    ys[0] = y0                        # set intial value
     dqdt = 0
     for i in range(nt):
         ys[i+1] = improved_euler_step(f, ts[i], ys[i], h, y0, [dqdt, *pars])
@@ -228,7 +230,7 @@ def plot_pressure_benchmark():
     # get average net production rate
     q = 4
     time = np.linspace(0, 50, 100)
-    conc = 0.03
+    conc = 0
     pars_2 = [conc, q, *pars]
     t_odeA, p_odeA = solve_pressure_const_q(pressure_ode_model, time[0], PRESSURE[0], time[-1], STEP, pars_2)
     p_ana = analytical_solution(time, q, a, b, c)
@@ -330,24 +332,25 @@ def plot_model_predictions():
 
     for i in range(len(injRates)):
         q_net = q_prod[-1] - (q_inj[-1])*injRates[i]
-        t, p, c = get_p_conc_forecast(ts, pars_conc, pars_pressure, q_net, 'p')
+        q_newInj = (q_inj[-1])*injRates[i]
+        t, p, c = get_p_conc_forecast(ts, pars_conc, pars_pressure, q_net, q_newInj, 'p')
         ax1.plot(t, p, color=colours[i], label = labels[i])
         ax2.plot(t, c, color=colours[i], label = labels[i])
 
     plt.legend()
     plt.show()
     return
-def get_p_conc_forecast(t, pars_conc, pars_pressure, q, type):
+def get_p_conc_forecast(t, pars_conc, pars_pressure, q, q_newInj, type):
     dq = 0
     p = np.zeros(len(t))
     conc = np.zeros(len(t))
     p[0] = PRESSURE[-1]
     conc[0] = CONC[-1]
     for i in range(len(t) - 1):
-        conc[i+1] = improved_euler_step_conc(conc_ODE_model, t[i], conc[i], STEP, CONC[0], [q, p[i], PRESSURE[0], *pars_conc])
+        conc[i+1] = improved_euler_step_conc(conc_ODE_model, t[i], conc[i], STEP, CONC[0], [q_newInj, p[i], PRESSURE[0], *pars_conc])
         p[i+1] = improved_euler_step(pressure_ode_model, t[i], p[i], STEP, PRESSURE[0], [dq, q, conc[i], *pars_pressure])
 
     return t, p, conc
 if __name__ == "__main__":
-    #plot_pressure_benchmark()
-    plot_model_predictions()
+    plot_pressure_benchmark()
+    #plot_model_predictions()
