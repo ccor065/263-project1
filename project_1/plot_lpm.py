@@ -122,7 +122,7 @@ def plot_pressure_benchmark():
 # Conc Benchmarking PLotter
 def plot_conc_benchmark():
 
-    d, m0 = find_pars_conc()
+    d, m0, calibrationPoint = find_pars_conc()
     print(d, m0)
 
     a,b, __,_ = find_pars_pressure()
@@ -152,7 +152,7 @@ def plot_model_predictions():
     fig, (ax1, ax2) = plt.subplots(1, 2)
     fig.set_figwidth(10)
     plt.subplots_adjust(None, None, None,None, wspace=0.2, hspace=None)
-    d, m0 = find_pars_conc()
+    d, m0, calibrationPoint = find_pars_conc()
     a,b,c,_ = find_pars_pressure()
     pars_pressure = [a,b, c]
     pars_conc = [a, b, d, m0]
@@ -184,7 +184,7 @@ def plot_model_predictions():
     for i in range(len(injRates)):
         q_net = q_prod[-1] - (q_inj[-1])*injRates[i]
         q_newInj = (q_inj[-1])*injRates[i]
-        t, p, c = get_p_conc_forecast(ts, pars_conc, pars_pressure, q_net, q_newInj, 'p')
+        t, p, c = get_p_conc_forecast(ts, pars_conc, pars_pressure, q_net, q_newInj)
         ax1.plot(t, p, color=colours[i], label = labels[i])
         ax2.plot(t, c, color=colours[i], label = labels[i])
 
@@ -195,5 +195,4 @@ def plot_model_predictions():
 if __name__ == "__main__":
     #plot_pressure_benchmark()
     #plot_conc_benchmark()
-
     plot_model_predictions()
