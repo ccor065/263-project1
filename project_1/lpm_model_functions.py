@@ -395,7 +395,7 @@ def find_pars_conc():
     return parameters[0], parameters[1], trainingSize
 
 ## Analytical Solution Solver
-def conc_analytical_solution(m0, d):e
+def conc_analytical_solution(m0, d):
     """
     Computes analytical solution for simplified version of pressure ODE model.
     Used for bench marking.
