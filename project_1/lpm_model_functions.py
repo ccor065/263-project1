@@ -5,14 +5,15 @@ import math
 from scipy.optimize import curve_fit
 from scipy.interpolate import interp1d
 from load_data import *
+
 # Define global variables
 TIME_P, PRESSURE = load_pressure_data()
 TIME_C, CONC = load_c02_wt_data()
-STEP = 0.1
+STEP = 0.04
 """
 ### PRESSURE FUNCTIONs
 """
-### Curve fitting functions
+### Pressure curve fitting functions
 def curve_fit_pressure(t, a, b, c):
     '''
     Solve pressure ode with the given paramters
@@ -79,7 +80,7 @@ def find_pars_pressure():
     trainingSize = math.ceil(0.8*len(ts)) # get length training array
 
     # use curve_fit to find pars that give best fit ODE to data.
-    parameters, covariance = curve_fit(curve_fit_pressure, ts[0:trainingSize], pi[0:trainingSize], pars)
+    parameters, covariance = curve_fit(curve_fit_pressure, ts[0:trainingSize], pi[0:trainingSize+1], pars)
     # return pars, a, b, c and also calibration point.
     return parameters[0], parameters[1], parameters[2], trainingSize
 def get_q_dq_conc(t):
@@ -190,7 +191,7 @@ def pressure_ode_model(t, p, p0, dq, q, conc, a, b, c):
         q = q + qloss #q loss reduces qc02 therefore add to net flow.
     dpdt =  -a*q - b*(p-p0) - c*dq  # calculate derivative# #
     return dpdt#comment done
-#### numerical Solvers
+#### Numerical Solvers
 def improved_euler_step(f, tk, yk, h, y0, pars):
     '''
     Computes dp/dt at a specific time given parameters
@@ -314,7 +315,7 @@ def solve_pressure_const_q(f, t0, y0, t1, h, pars):
 '''
 ### Concentration Functions
 '''
-### Curve fitting functions
+### Concentration curve fitting functions
 def curve_fit_conc(t, d, m0):
     '''
     Solve pressure ode with the given paramters
