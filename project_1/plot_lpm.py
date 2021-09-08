@@ -74,7 +74,7 @@ def plot_pressure_benchmark():
         p_at1983[i] = p[-1]
 
     fig, (ax1, ax2) = plt.subplots(1,2)
-    ax1.scatter(step_nums, p_at1983, color = 'r')
+    ax1.scatter(step_nums, p_at1983, s = 9, color = 'r')
     ax1.set_ylabel('Pressure(MPa) at year = 1983')
     ax1.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2f'))
     ax1.set_xlabel('Step Size')
@@ -88,11 +88,11 @@ def plot_pressure_benchmark():
         p_at1983[i] = p[-1]
 
     # Plot data points for convergence analyaia
-    ax2.scatter(step_nums, p_at1983, color = 'r', label = "Pressure(MPa) at x = step size")
+    ax2.scatter(step_nums, p_at1983, s = 9, color = 'r', label = "Pressure(MPa) at x = step size")
     ax2.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2f'))
     ax2.set_xlabel('Step Size')
     #Lables axis and give a tite
-    plt.suptitle('Convergence analysis for step size for p(t=1983) and h = 0.001 - 12 ')
+    plt.suptitle('Convergence analysis for step size for p(t=1983) and h = 0.001 - 20 ')
     # Display legend and graph
     plt.legend()
     plt.savefig('ConvergenceAnalysis_pressureModel.png',dpi=300)
@@ -110,7 +110,7 @@ def plot_pressure_benchmark():
     for i in range(len(p_data_interp)):
         misfit[i] = p_ode[i] - p_data_interp[i]
 
-    plt.scatter(ts, misfit)
+    plt.scatter(ts, misfit, s = 9)
     plt.axhline(y=0, color = 'black', linestyle = '--')
     plt.ylabel('Misfit',fontsize=10)
     plt.xlabel('Time',fontsize=10)
@@ -147,11 +147,69 @@ def plot_conc_benchmark():
     plt.legend()
     plt.show()
 
+    """
+    PLOT Convergence analysis
+    """
+
+    step_nums = np.linspace(0.001, 20, 200)
+    end_c = np.zeros(len(step_nums))
+
+    for i in range(len(step_nums)):
+        t, c = solve_conc_ode(conc_ODE_model, TIME_C[0], 0.03, 2005, step_nums[i], p0, pars)
+        end_c[i] = c[-1]
+
+    fig, (ax1, ax2) = plt.subplots(1,2)
+    ax1.scatter(step_nums, end_c, s = 9, color = 'r')
+    ax1.set_ylabel('Conc(%) in year 2005')
+    ax1.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2f'))
+    ax1.set_xlabel('Step Size')
+
+    # Compute convergence analysis for step size 0-2 to obtain better visualization
+    step_nums = np.linspace(0.001, 2, 100)
+    end_c = np.zeros(len(step_nums))
+
+    for i in range(len(step_nums)):
+        t, c = solve_conc_ode(conc_ODE_model, TIME_C[0], 0.03, 2005, step_nums[i], p0, pars)
+        end_c[i] = c[-1]
+
+    # Plot data points for convergence analyaia
+    ax2.scatter(step_nums, end_c, s = 9, color = 'r')
+    ax2.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2f'))
+    ax2.set_xlabel('Step Size')
+    #Lables axis and give a tite
+    plt.suptitle('Convergence analysis for step size for p(t=2005) and h = 0.001 - 20 ')
+    # Display legend and graph
+    plt.legend()
+    plt.savefig('ConvergenceAnalysis_concModel.png',dpi=300)
+    plt.show()
+
+    """
+    PLOT RMS misfit between data and ODE
+    """
+
+    misfit = np.zeros(len(c_ode))
+    nt = int(np.ceil((TIME_C[-1]-TIME_C[0])/STEP))	# compute number of points to compare
+    ts = TIME_C[0]+np.arange(nt+1)*STEP			# x array
+    c_data_interp = np.interp(ts, TIME_C, CONC)
+
+    for i in range(len(c_data_interp)):
+        misfit[i] = c_ode[i] - c_data_interp[i]
+
+    plt.scatter(ts, misfit, s = 9)
+    plt.axhline(y=0, color = 'black', linestyle = '--')
+    plt.ylabel('Misfit',fontsize=10)
+    plt.xlabel('Time',fontsize=10)
+
+    plt.title('Misfit ODE vs interpolated data for concentration')
+    plt.savefig('misfitModel_vs_data_conc',dpi=300)
+    plt.show()
+
 # Plot Model predictions
 def plot_model_predictions():
     fig, (ax1, ax2) = plt.subplots(1, 2)
     fig.set_figwidth(10)
     plt.subplots_adjust(None, None, None,None, wspace=0.2, hspace=None)
+    lines = []
     d, m0, calibrationPoint = find_pars_conc()
     a,b,c,_ = find_pars_pressure()
     pars_pressure = [a,b, c]
@@ -160,12 +218,12 @@ def plot_model_predictions():
     # model
     t_ode, p_ode = solve_pressure_ode(pressure_ode_model, TIME_P[0], PRESSURE[0], TIME_P[-1], STEP, pars_pressure)
     # plot the data observations
-    ax1.plot(TIME_P, PRESSURE,color='k', label ='Pressure Observations')
+    lines.append(ax1.plot(TIME_P, PRESSURE,color='k')[0])
     # plot the model solution
-    ax1.plot(t_ode, p_ode, color = 'r', label = 'ODE')
+    lines.append(ax1.plot(t_ode, p_ode, color = 'r')[0])
     tc_ode, c_ode = solve_conc_ode(conc_ODE_model, TIME_C[0], CONC[0], TIME_C[-1], STEP, PRESSURE[0], pars_conc)
-    ax2.plot(tc_ode, c_ode, label = "ode model")
-    ax2.plot(TIME_C, CONC, 'o', label='data')
+    ax2.plot(tc_ode, c_ode, color = 'r')
+    ax2.plot(TIME_C, CONC, color = 'k')
 
     # Set up paramters for forecast
     endTime = TIME_P[-1] + 30                     # 30 years projection
@@ -178,21 +236,21 @@ def plot_model_predictions():
 
     # stop injection
     injRates = [0., 0.5, 1., 2., 4.] #different injection rate multipliers
-    colours = ['g', 'orange', 'b', 'cyan', 'pink'] #for graph
-    labels = ['Stop injection', 'Halve injection', 'Same injection', 'Double injection', 'Quadruple injection'] #for graph
+    colours = ['green', 'orange', 'blue', 'cyan', 'pink'] #for graph
+    labels = ['Observations', 'Model', 'Stop injection', 'Halve injection', 'Same injection', 'Double injection', 'Quadruple injection'] #for graph
 
     for i in range(len(injRates)):
         q_net = q_prod[-1] - (q_inj[-1])*injRates[i]
         q_newInj = (q_inj[-1])*injRates[i]
         t, p, c = get_p_conc_forecast(ts, pars_conc, pars_pressure, q_net, q_newInj)
-        ax1.plot(t, p, color=colours[i], label = labels[i])
-        ax2.plot(t, c, color=colours[i], label = labels[i])
+        lines.append(ax1.plot(t, p, color=colours[i])[0])
+        ax2.plot(t, c, color=colours[i])
 
-    plt.legend()
+    fig.legend([lines[0], lines[1], lines[2], lines[3]], labels=labels, loc="center right", borderaxespad=0.1)
     plt.show()
     return
 
 if __name__ == "__main__":
-    plot_pressure_benchmark()
+    #plot_pressure_benchmark()
     #plot_conc_benchmark()
-    #plot_model_predictions()
+    plot_model_predictions()

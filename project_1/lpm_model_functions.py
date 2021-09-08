@@ -16,7 +16,6 @@ STEP = 0.1
 def curve_fit_pressure(t, a, b, c):
     '''
     Solve pressure ode with the given paramters
-
     Parameters:
     -----------
     t : array-like
@@ -27,7 +26,6 @@ def curve_fit_pressure(t, a, b, c):
         value of parameter b
     c : float
         value of parameter c
-
     Returns:
     --------
     pressureODE : array-like
@@ -43,7 +41,6 @@ def find_pars_pressure():
     '''
     Finds the parameters for the pressure ODE which gives best fit to the data
     using scipy curve_fit.
-
     Parameters:
     -----------
     t : array-like
@@ -54,7 +51,6 @@ def find_pars_pressure():
         value of parameter b
     c : float
         value of parameter c
-
     Returns:
     --------
     parameters[0]: float
@@ -93,7 +89,6 @@ def get_q_dq_conc(t):
     -----------
     t : array-like
         vector of time points
-
     Returns:
     --------
     q:     array-like
@@ -102,7 +97,6 @@ def get_q_dq_conc(t):
            derivative of net flow rate
     conc:  array-like
            interpolated concentration for time array, t.
-
     Notes:
     -------
     q_production and q_c02 are interploated and then subtracted to find net flow rate.
@@ -150,7 +144,6 @@ def pressure_analytical_solution(t, q, a, b, c):
         value of parameter b
     c : float
         value of parameter c
-
     Returns
     -------
     p_ana : array of double
@@ -166,7 +159,6 @@ def pressure_analytical_solution(t, q, a, b, c):
 def pressure_ode_model(t, p, p0, dq, q, conc, a, b, c):
     '''
     Computes dp/dt at a specific time given parameters
-
     Parameters:
     -----------
     t : float
@@ -187,7 +179,6 @@ def pressure_ode_model(t, p, p0, dq, q, conc, a, b, c):
         value of parameter b
     c : float
         value of parameter c
-
     Returns:
     --------
     dpdt : float
@@ -203,7 +194,6 @@ def pressure_ode_model(t, p, p0, dq, q, conc, a, b, c):
 def improved_euler_step(f, tk, yk, h, y0, pars):
     '''
     Computes dp/dt at a specific time given parameters
-
     Parameters:
     -----------
     f : function
@@ -218,8 +208,6 @@ def improved_euler_step(f, tk, yk, h, y0, pars):
         inital value of dependent variable.
     pars : array-like
         individual paramters to be passed into ode function.
-
-
     Returns:
     --------
     yk1 : float
@@ -239,7 +227,6 @@ def improved_euler_step(f, tk, yk, h, y0, pars):
 def solve_pressure_ode(f, t0, y0, t1, h, pars):
     '''
     Computes solution to pressure ODE using improved euler.
-
     Parameters:
     -----------
     f : function
@@ -256,14 +243,12 @@ def solve_pressure_ode(f, t0, y0, t1, h, pars):
         individual paramters that are solved using the curve_fit function.
         pars should contain: [a, b, c] only, where a,b,c are solved using
         curve_fit.
-
     Returns:
     --------
     ts : array-like
          Corresponding times at which the dependent variables are solved.
     ys : array-like
          Solution to ODE for given time range.
-
     Notes:
     --------
     The parameter 'pars' does not contain the same pars as what is passed into
@@ -287,7 +272,6 @@ def solve_pressure_const_q(f, t0, y0, t1, h, pars):
     '''
     Computes solution to pressure ODE for a contstant flow rate and Concentration
      using improved euler.
-
     Parameters:
     -----------
     f : function
@@ -305,14 +289,12 @@ def solve_pressure_const_q(f, t0, y0, t1, h, pars):
         pars should contain = [conc, q, a, b, c].
         where a,b,c are solved using curve_fit and conc and q are contstant values
         of concentration wt%C02 and net flow rate respectively.
-
     Returns:
     --------
     ts : array-like
          Corresponding times at which the dependent variables are solved.
     ys : array-like
          Solution to ODE for given time range.
-
     Notes:
     --------
     The parameter 'pars' does not contain the same pars as what is passed into
@@ -336,7 +318,6 @@ def solve_pressure_const_q(f, t0, y0, t1, h, pars):
 def curve_fit_conc(t, d, m0):
     '''
     Solve pressure ode with the given paramters
-
     Parameters:
     -----------
     t : array-like
@@ -360,7 +341,6 @@ def find_pars_conc():
     '''
     Finds the parameters for the pressure ODE which gives best fit to the data
     using scipy curve_fit.
-
     Parameters:
     -----------
     t : array-like
@@ -371,14 +351,12 @@ def find_pars_conc():
         value of parameter b
     c : float
         value of parameter c
-
     Returns:
     --------
     parameters[0]: float
                    value of parameter d which gives best fit.
     parameters[1]: float
                    value of parameter m0 which gives best fit.
-
     trainingSize: float
                  gives the index at where claibration point is in the time array.
     '''
@@ -405,7 +383,6 @@ def conc_analytical_solution(m0, d):
         value of parameter m0
     d : float
         value of parameter d
-
     Returns
     -------
     time : array-like
@@ -479,7 +456,6 @@ def conc_ODE_model(t, c, c0, q, p, p0, a, b, d, m0):
 def solve_conc_ode(f, t0, y0, t1, h, p0, pars=[]):
     '''
     Computes solution to concentration ODE using improved euler
-
     Parameters:
     -----------
     f : function
@@ -496,14 +472,12 @@ def solve_conc_ode(f, t0, y0, t1, h, p0, pars=[]):
         individual paramters that are solved using the curve_fit function.
         pars should contain: [a, b, d, m0] only, where a,b are solved using
         curve_fit for pressure and d & m0 the concentration one.
-
     Returns:
     --------
     ts : array-like
          Corresponding times at which the dependent variables are solved.
     ys : array-like
          Solution to ODE for given time range.
-
     Notes:
     --------
     The parameter 'pars' does not contain the same pars as what is passed into
@@ -532,7 +506,6 @@ def solve_conc_ode_ana(f, t0, y0, t1, h, p0, pars=[]):
     '''
     Computes solution to concentration ODE for the benchmarking of the
     analytical solution.
-
     Parameters:
     -----------
     f : function
@@ -551,14 +524,12 @@ def solve_conc_ode_ana(f, t0, y0, t1, h, p0, pars=[]):
         individual paramters that are solved using the curve_fit function.
         pars should contain: [a, b, d, m0] only, where a,b are solved using
         curve_fit for pressure and d & m0 the concentration one.
-
     Returns:
     --------
     ts : array-like
          Corresponding times at which the dependent variables are solved.
     ys : array-like
          Solution to ODE for given time range.
-
     Notes:
     --------
     The parameter 'pars' does not contain the same pars as what is passed into
