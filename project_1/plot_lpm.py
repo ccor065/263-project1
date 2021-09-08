@@ -52,7 +52,7 @@ def plot_pressure_benchmark():
     q = 4
     time = np.linspace(0, 50, 100)
     conc = 0
-    pars_2 = [conc, q, *pars]
+    pars_2 = [q, conc, *pars]
     t_odeA, p_odeA = solve_pressure_const_q(pressure_ode_model, time[0], PRESSURE[0], time[-1], STEP, pars_2)
     p_ana = pressure_analytical_solution(time, q, a, b, c)
     ax2.plot(t_odeA, p_odeA, color = 'r', label = 'ODE')
@@ -193,6 +193,6 @@ def plot_model_predictions():
     return
 
 if __name__ == "__main__":
-    #plot_pressure_benchmark()
+    plot_pressure_benchmark()
     #plot_conc_benchmark()
-    plot_model_predictions()
+    #plot_model_predictions()
