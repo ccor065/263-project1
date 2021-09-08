@@ -207,8 +207,8 @@ def plot_conc_benchmark():
 # Plot Model predictions
 def plot_model_predictions():
     fig, (ax1, ax2) = plt.subplots(1, 2)
-    fig.set_figwidth(10)
-    plt.subplots_adjust(None, None, None,None, wspace=0.2, hspace=None)
+    fig.set_figwidth(12)
+    plt.subplots_adjust(None, None, None,None, wspace=None, hspace=None)
     lines = []
     d, m0, calibrationPoint = find_pars_conc()
     a,b,c,_ = find_pars_pressure()
@@ -218,11 +218,11 @@ def plot_model_predictions():
     # model
     t_ode, p_ode = solve_pressure_ode(pressure_ode_model, TIME_P[0], PRESSURE[0], TIME_P[-1], STEP, pars_pressure)
     # plot the data observations
-    lines.append(ax1.plot(TIME_P, PRESSURE,color='k')[0])
+    p1, = ax1.plot(TIME_P, PRESSURE,color='k')
     # plot the model solution
-    lines.append(ax1.plot(t_ode, p_ode, color = 'r')[0])
+    ax1.plot(t_ode, p_ode, color = 'r')
     tc_ode, c_ode = solve_conc_ode(conc_ODE_model, TIME_C[0], CONC[0], TIME_C[-1], STEP, PRESSURE[0], pars_conc)
-    ax2.plot(tc_ode, c_ode, color = 'r')
+    p2, = ax2.plot(tc_ode, c_ode, color = 'r')
     ax2.plot(TIME_C, CONC, color = 'k')
 
     # Set up paramters for forecast
@@ -237,16 +237,16 @@ def plot_model_predictions():
     # stop injection
     injRates = [0., 0.5, 1., 2., 4.] #different injection rate multipliers
     colours = ['green', 'orange', 'blue', 'cyan', 'pink'] #for graph
-    labels = ['Observations', 'Model', 'Stop injection', 'Halve injection', 'Same injection', 'Double injection', 'Quadruple injection'] #for graph
+    labels = ['Stop, injection =', 'Halve injection', 'Same injection', 'Double injection', 'Quadruple injection'] #for graph
 
     for i in range(len(injRates)):
         q_net = q_prod[-1] - (q_inj[-1])*injRates[i]
         q_newInj = (q_inj[-1])*injRates[i]
         t, p, c = get_p_conc_forecast(ts, pars_conc, pars_pressure, q_net, q_newInj)
-        lines.append(ax1.plot(t, p, color=colours[i])[0])
-        ax2.plot(t, c, color=colours[i])
+        ax1.plot(t, p, color=colours[i], label = labels[i])
+        ax2.plot(t, c, color=colours[i], label = labels[i])
 
-    fig.legend([lines[0], lines[1], lines[2], lines[3]], labels=labels, loc="center right", borderaxespad=0.1)
+    ax1.legend(loc = 'upper center')
     plt.show()
     return
 
