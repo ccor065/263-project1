@@ -83,7 +83,7 @@ def find_pars_pressure():
     parameters, covariance = curve_fit(curve_fit_pressure, ts[0:trainingSize], pi[0:trainingSize+1], pars)
     # return pars, a, b, c and also calibration point.
     return parameters[0], parameters[1], parameters[2], trainingSize
-def get_q_dq_conc(t):
+def get_q_dq(t):
     '''
     Returns net flow rate q, and dq/dt, for number of points as in vector input, t.
     Parameters:
@@ -96,19 +96,16 @@ def get_q_dq_conc(t):
            net flow rate
     dqdt:  array-like
            derivative of net flow rate
-    conc:  array-like
-           interpolated concentration for time array, t.
+
     Notes:
     -------
     q_production and q_c02 are interploated and then subtracted to find net flow rate.
     '''
     # load in flow rate and concentration data
-    tc, conc_raw = load_c02_wt_data()
     t1, q_raw = load_production_data()
     t2, co2_raw = load_injection_data()
 
-    #interpolate concentration
-    conc = np.interp(t, tc, conc_raw)
+
 
     # Interpolate co2 injection and production vectors to have same amount of points
     # as vector t.
@@ -126,7 +123,7 @@ def get_q_dq_conc(t):
     dqdt[0] = (q[1]-q[0])/(t[1]-t[0])           #foward differences
     dqdt[-1] = (q[-1]-q[-2])/(t[-1]-t[-2])      #backward differences
 
-    return q, dqdt, conc
+    return q, dqdt,
 
 ## Analytical Solution Solvers
 def pressure_analytical_solution(t, q, a, b, c):
@@ -157,7 +154,7 @@ def pressure_analytical_solution(t, q, a, b, c):
 
     return p_ana# comment done
 #### MODEL FUNCTIONS
-def pressure_ode_model(t, p, p0, dq, q, conc, a, b, c):
+def pressure_ode_model(t, p, p0, dq, q, a, b, c):
     '''
     Computes dp/dt at a specific time given parameters
     Parameters:
@@ -186,11 +183,9 @@ def pressure_ode_model(t, p, p0, dq, q, conc, a, b, c):
            value of the derivate dp/dt at time t.
     '''
     # calculate ground water loss if pressure is greater than inital pressure.
-    if p > p0:
-        qloss = (b/a) *(p-p0)*conc*t
-        q = q + qloss #q loss reduces qc02 therefore add to net flow.
+
     dpdt =  -a*q - b*(p-p0) - c*dq  # calculate derivative# #
-    return dpdt#comment done
+    return dpdt
 #### Numerical Solvers
 def improved_euler_step(f, tk, yk, h, y0, pars):
     '''
@@ -262,10 +257,10 @@ def solve_pressure_ode(f, t0, y0, t1, h, pars):
     ys[0] = y0                          # set intial value
 
     # get q, dqdt and concentration arrays (same length as ts)
-    q, dqdt, conc = get_q_dq_conc(ts)
+    q, dqdt= get_q_dq(ts)
     for i in range(nt):
         # compute improved euler step to solve the ODE numerically
-        ys[i+1] = improved_euler_step(f, ts[i], ys[i], h, y0, [dqdt[i], q[i], conc[i], *pars])
+        ys[i+1] = improved_euler_step(f, ts[i], ys[i], h, y0, [dqdt[i], q[i], *pars])
 
     # return arays containing the time and solved dependent variables.
     return  ts, ys
@@ -443,13 +438,8 @@ def conc_ODE_model(t, c, c0, q, p, p0, a, b, d, m0):
     # computes c' c_alt2 that is used for qC02 loss to groundwater
     if (p > p0):
         c_alt = c
-        c_alt2 = c
     else:
         c_alt = c0
-        c_alt2 = 0
-
-    qloss = (b/a)*(p-p0)*c_alt2*t # calculating CO2 loss to groundwater
-    q = q - qloss # qCO2 after the loss
 
     return (1-c)*(q/m0) - (b/(a*m0))*(p-p0)*(c_alt-c) - d*(c-c0)
 
@@ -564,6 +554,6 @@ def get_p_conc_forecast(t, pars_conc, pars_pressure, q, q_newInj):
     conc[0] = CONC[-1]
     for i in range(len(t) - 1):
         conc[i+1] = improved_euler_step(conc_ODE_model, t[i], conc[i], STEP, CONC[0], [q_newInj, p[i], PRESSURE[0], *pars_conc])
-        p[i+1] = improved_euler_step(pressure_ode_model, t[i], p[i], STEP, PRESSURE[0], [dq, q, conc[i], *pars_pressure])
+        p[i+1] = improved_euler_step(pressure_ode_model, t[i], p[i], STEP, PRESSURE[0], [dq, q,  *pars_pressure])
 
     return t, p, conc

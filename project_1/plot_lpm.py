@@ -49,10 +49,10 @@ def plot_pressure_benchmark():
     # Initalise values for benchmarking analytical solution.
     q = 4                           # constant flow rate
     time = np.linspace(0, 50, 100)  # time array
-    conc = 0                        # concentration
+                       # concentration
 
     # Get values for pressure to Benchmark using the numerical solver.
-    t_odeA, p_odeA = solve_pressure_const_q(pressure_ode_model, time[0], PRESSURE[0], time[-1], STEP, [q, conc, *PARS_P])
+    t_odeA, p_odeA = solve_pressure_const_q(pressure_ode_model, time[0], PRESSURE[0], time[-1], STEP, [q,  *PARS_P])
     # Get values of pressure using the analytical solution
     p_ana = pressure_analytical_solution(time, q, *PARS_P)
 
@@ -162,7 +162,7 @@ def plot_conc_benchmark():
     plt.title('Misfit ODE vs interpolated data for concentration')
     plt.savefig('misfitModel_vs_data_conc',dpi=300)
     plt.show()
-    
+
 # Plot Model predictions
 def plot_model_predictions():
     fig, (ax1, ax2) = plt.subplots(1, 2)
@@ -209,4 +209,4 @@ def plot_model_predictions():
 if __name__ == "__main__":
     plot_pressure_benchmark()
     #plot_conc_benchmark()
-    #plot_model_predictions()
+    plot_model_predictions()
