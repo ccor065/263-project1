@@ -125,7 +125,7 @@ def find_pars_pressure_covariance():
     trainingSize = math.ceil(0.8*len(ts)) # get length training array
 
     # use curve_fit to find pars that give best fit ODE to data.
-    parameters, covariance = curve_fit(curve_fit_pressure, ts[0:trainingSize], pi[0:trainingSize+1], pars)                
+    parameters, covariance = curve_fit(curve_fit_pressure, ts[0:trainingSize], pi[0:trainingSize+1], pars)
     # return pars, a, b, c and also calibration point.
     return parameters[0], parameters[1], parameters[2], covariance
 def get_q_dq(t):

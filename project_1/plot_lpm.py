@@ -37,7 +37,7 @@ def plot_pressure_benchmark():
     t_ode, p_ode = solve_pressure_ode(pressure_ode_model, TIME_P[0], PRESSURE[0], TIME_P[-1], STEP, PARS_P)
 
     # plot the data observations
-    ax1.scatter(TIME_P, PRESSURE,color='r', marker = 'x', label ='Observations')
+    ax1.scatter(TIME_P, PRESSURE, color='r', marker = 'x', label ='Observations')
     #ax1.axvline(t_ode[calibrationPointP], linestyle = '--', label = 'Calibration Point')
 
     # plot the model solution
@@ -67,7 +67,25 @@ def plot_pressure_benchmark():
     ax2.legend()
     plt.savefig('model_vs_ODE_analytical.png',dpi=300)
     plt.show()
+    """
+    PLOT Convergence
+    """
 
+    step_nums = np.linspace(0.05, 0.8, 200)
+    pAt_1983 = np.zeros(len(step_nums))
+    h = np.zeros(len(step_nums))
+
+    for i in range(len(step_nums)):
+        t, p = solve_pressure_ode(pressure_ode_model, time[0], PRESSURE[0], 1983, step_nums[i], PARS_P)
+        pAt_1983[i] = p[-1]
+        h[i] = 1/step_nums[i]
+
+    plt.scatter(h, pAt_1983, s= 9, color = 'r', label = "Pressure 1983(x) at x = Step Size")
+    plt.title("Convergence Analysis for Pressure ODE")
+    plt.xlabel("Step size = 1/h")
+    plt.ylabel("Pressure MPa at 1983")
+    plt.savefig('ConvergenceAnalysis_pressureModel.png',dpi=300)
+    plt.show()
 
     """
     PLOT RMS misfit between data and ODE
@@ -93,58 +111,45 @@ def plot_pressure_benchmark():
 # Conc Benchmarking PLotter
 def plot_conc_benchmark():
 
-
-    t_ode, c_ode = solve_conc_ode(conc_ODE_model, TIME_C[0], 0.03, TIME_C[-1], STEP, PRESSURE[0], PARS_C)
-    plt.plot(t_ode, c_ode, label = "ode model")
-    plt.plot(TIME_C, CONC, 'o', label='data')
+    """
+    PLOT DATA vs ODE
+    """
+    t_ode, c_ode = solve_conc_ode(conc_ODE_model, TIME_C[0], CONC[0], TIME_C[-1], STEP, PRESSURE[0], PARS_C)
+    plt.plot(t_ode, c_ode,color = 'black', label = 'ODE')
+    plt.scatter(TIME_C, CONC,color='r', marker = 'x', label ='Observations')
     plt.legend()
     plt.show()
 
     #### Benchmark numerical(ode) solution against analytical solution
     time, c_ana = conc_analytical_solution(m0, d)
     # plot analytical solution
-    plt.plot(time, c_ana, color = 'b', label = "Analytical Solution")
+    plt.plot(time, c_ana,  color = 'r', marker = 'x', label = 'Analytical Solution')
     # plot the model solution
-    t_ode, c_ode = solve_conc_ode_ana(conc_ODE_model, TIME_C[0], 0.03, TIME_C[-1], STEP, PRESSURE[0], PARS_C)
-    plt.plot(t_ode, c_ode, label = "ode model")
+    t_ode, c_ode = solve_conc_ode_ana(conc_ODE_model, TIME_C[0], CONC[0], TIME_C[-1], STEP, PRESSURE[0], PARS_C)
+    plt.plot(t_ode, c_ode,color = 'black', label = 'ODE')
     plt.legend()
     plt.show()
-
     """
-    PLOT Convergence analysis
+    PLOT Convergence
     """
 
-    step_nums = np.linspace(0.001, 20, 200)
+
+    step_nums = np.linspace(0.05, 0.8, 200)
     end_c = np.zeros(len(step_nums))
+    h = np.zeros(len(step_nums))
 
     for i in range(len(step_nums)):
-        t, c = solve_conc_ode(conc_ODE_model, TIME_C[0], 0.03, 2005, step_nums[i], PRESSURE[0], PARS_C)
+        t, c = solve_conc_ode(conc_ODE_model, TIME_C[0], CONC[0], 2005, step_nums[i], PRESSURE[0], PARS_C)
         end_c[i] = c[-1]
+        h[i] = 1/step_nums[i]
 
-    fig, (ax1, ax2) = plt.subplots(1,2)
-    ax1.scatter(step_nums, end_c, s = 9, color = 'r')
-    ax1.set_ylabel('Conc(%) in year 2005')
-    ax1.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2f'))
-    ax1.set_xlabel('Step Size')
-
-    # Compute convergence analysis for step size 0-2 to obtain better visualization
-    step_nums = np.linspace(0.001, 2, 100)
-    end_c = np.zeros(len(step_nums))
-
-    for i in range(len(step_nums)):
-        t, c = solve_conc_ode(conc_ODE_model, TIME_C[0], 0.03, 2005, step_nums[i], PRESSURE[0], PARS_C)
-        end_c[i] = c[-1]
-
-    # Plot data points for convergence analyaia
-    ax2.scatter(step_nums, end_c, s = 9, color = 'r')
-    ax2.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2f'))
-    ax2.set_xlabel('Step Size')
-    #Lables axis and give a tite
-    plt.suptitle('Convergence analysis for step size for p(t=2005) and h = 0.001 - 20 ')
-    # Display legend and graph
-    plt.legend()
+    plt.scatter(h, end_c, s= 9, color = 'r', label = "C02wt% 2005(h) at h = Step Size")
+    plt.title("Convergence Analysis for Concentration ODE")
+    plt.xlabel("Step size = 1/h")
+    plt.ylabel("C02wt% at 2005")
     plt.savefig('ConvergenceAnalysis_concModel.png',dpi=300)
     plt.show()
+
 
     """
     PLOT RMS misfit between data and ODE
@@ -158,7 +163,7 @@ def plot_conc_benchmark():
     for i in range(len(c_data_interp)):
         misfit[i] = c_ode[i] - c_data_interp[i]
 
-    plt.scatter(ts, misfit, s = 9)
+    plt.scatter(ts, misfit, s = 9, color = 'r')
     plt.axhline(y=0, color = 'black', linestyle = '--')
     plt.ylabel('Misfit',fontsize=10)
     plt.xlabel('Time',fontsize=10)
@@ -213,7 +218,7 @@ def plot_model_predictions():
 """
 PLOTTING POSTERIOR
 """
-def plot_posterior3D(a, b, c, P):	
+def plot_posterior3D(a, b, c, P):
     """Plot posterior distribution for each parameter combination
 
     Args:
@@ -224,7 +229,7 @@ def plot_posterior3D(a, b, c, P):
 
     # plotting variables
     azim = 15.		# azimuth at which surfaces are shown
-    
+
     # a and b combination
     Ab, Ba = np.meshgrid(a, b, indexing='ij')
     Pab = np.zeros(Ab.shape)
@@ -232,20 +237,20 @@ def plot_posterior3D(a, b, c, P):
         for j in range(len(b)):
             Pab[i][j] = sum([P[i][j][k] for k in range(len(c))])
 
-    # a and c combination			
+    # a and c combination
     Ac, Ca = np.meshgrid(a, c, indexing='ij')
     Pac = np.zeros(Ac.shape)
     for i in range(len(a)):
         for k in range(len(c)):
             Pac[i][k] = sum([P[i][j][k] for j in range(len(b))])
-    
-    # b and c combination		
+
+    # b and c combination
     Bc, Cb = np.meshgrid(b, c, indexing='ij')
     Pbc = np.zeros(Bc.shape)
     for j in range(len(b)):
         for k in range(len(c)):
             Pbc[j][k] = sum([P[i][j][k] for i in range(len(a))])
-            
+
     # plotting
     fig = plt.figure(figsize=[20.0,15.])
     ax1 = fig.add_subplot(221, projection='3d')
@@ -257,7 +262,7 @@ def plot_posterior3D(a, b, c, P):
     ax1.set_ylim([b[0], b[-1]])
     ax1.set_zlim(0., )
     ax1.view_init(40, azim)
-    
+
     ax1 = fig.add_subplot(222, projection='3d')
     ax1.plot_surface(Ac, Ca, Pac, rstride=1, cstride=1,cmap=cm.Oranges, lw = 0.5)
     ax1.set_xlabel('a')
@@ -277,11 +282,11 @@ def plot_posterior3D(a, b, c, P):
     ax1.set_ylim([c[0], c[-1]])
     ax1.set_zlim(0., )
     ax1.view_init(40, azim)
-    
+
     # save and show
     plt.show()
 
-def plot_posterior2D(a, b, P):	
+def plot_posterior2D(a, b, P):
     """Plot posterior distribution
 
     Args:
@@ -289,15 +294,15 @@ def plot_posterior2D(a, b, P):
         b (numpy array): b distribution vector
         P (numpy array): posterior matrix
     """
-    
+
     # grid of parameter values: returns every possible combination of parameters in a and b
     A, B = np.meshgrid(a, b)
-    
+
     # plotting
     fig = plt.figure(figsize=[10., 7.])				# open figure
     ax1 = fig.add_subplot(111, projection='3d')		# create 3D axes
     ax1.plot_surface(A, B, P, rstride=1, cstride=1,cmap=cm.Oranges, lw = 0.5,edgecolor='k')	# show surface
-    
+
     # plotting upkeep
     ax1.set_xlabel('a')
     ax1.set_ylabel('b')
@@ -306,7 +311,7 @@ def plot_posterior2D(a, b, P):
     ax1.set_ylim([b[0], b[-1]])
     ax1.set_zlim(0., )
     ax1.view_init(40, 100.)
-    
+
     # save and show
     plt.show()
 
@@ -323,25 +328,25 @@ def plot_samples3D(a, b, c, P, samples):
         for j in range(len(b)):
             Pab[i][j] = sum([P[i][j][k] for k in range(len(c))])
 
-    # a and c combination			
+    # a and c combination
     Ac, Ca = np.meshgrid(a, c, indexing='ij')
     Pac = np.zeros(Ac.shape)
     for i in range(len(a)):
         for k in range(len(c)):
             Pac[i][k] = sum([P[i][j][k] for j in range(len(b))])
-    
-    # b and c combination		
+
+    # b and c combination
     Bc, Cb = np.meshgrid(b, c, indexing='ij')
     Pbc = np.zeros(Bc.shape)
     for j in range(len(b)):
         for k in range(len(c)):
             Pbc[j][k] = sum([P[i][j][k] for i in range(len(a))])
 
-    
+
     s = np.array([np.sum((np.interp(TIME_P, *solve_pressure_ode(pressure_ode_model, TIME_P[0], PRESSURE[0], TIME_P[-1], STEP, [a, b, c]))-PRESSURE)**2)/v for a,b,c in samples])
     p = np.exp(-s/2.)
-    
-    
+
+
     p = p/np.max(p)*np.max(P)*1.2
 
     # plotting
@@ -356,7 +361,7 @@ def plot_samples3D(a, b, c, P, samples):
     ax1.set_zlim(0., )
     ax1.view_init(40, azim)
     ax1.plot(samples[:,0],samples[:,1],p,'k.')
-    
+
     ax1 = fig.add_subplot(222, projection='3d')
     ax1.plot_surface(Ac, Ca, Pac, rstride=1, cstride=1,cmap=cm.Oranges, lw = 0.5)
     ax1.set_xlabel('a')
@@ -378,22 +383,22 @@ def plot_samples3D(a, b, c, P, samples):
     ax1.set_zlim(0., )
     ax1.view_init(40, azim)
     ax1.plot(samples[:,1],samples[:,-1],p,'k.')
-    
+
     # save and show
     plt.show()
-    
+
 def plot_samples2D(a, b, P, samples):
     # plotting
     fig = plt.figure(figsize=[10., 7.])				# open figure
     ax1 = fig.add_subplot(111, projection='3d')		# create 3D axes
     A, B = np.meshgrid(a, b, indexing='ij')
    	# show surface
-    
-    
+
+
     s = np.array([np.sum((np.interp(TIME_P, *solve_pressure_ode(pressure_ode_model, TIME_P[0], PRESSURE[0], TIME_P[-1], STEP, [a, b, c_best]))-PRESSURE)**2)/v for a,b,c in samples])
     p = np.exp(-s/2.)
     p = p/np.max(p)*np.max(P)*1.2
-        
+
     ax1.plot(*samples.T,p,'k.')
 
     # plotting upkeep
@@ -402,11 +407,11 @@ def plot_samples2D(a, b, P, samples):
     ax1.set_zlabel('P')
     ax1.set_zlim(0., )
     ax1.view_init(40, 100.)
-    
+
     # save and show
     plt.show()
 
 if __name__ == "__main__":
-    #plot_pressure_benchmark()
+    plot_pressure_benchmark()
     plot_conc_benchmark()
     #plot_model_predictions()
