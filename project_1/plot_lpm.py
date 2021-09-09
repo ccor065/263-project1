@@ -6,15 +6,19 @@ from scipy.optimize import curve_fit
 from scipy.interpolate import interp1d
 from load_data import *
 from lpm_model_functions import *
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import cm
 
 ## Define global Variables
 TIME_P, PRESSURE = load_pressure_data()
 TIME_C, CONC = load_c02_wt_data()
 a, b, c, calibrationPointP = find_pars_pressure()
+a_best, b_best, c_best, calibrationPointP = find_pars_pressure()
 d, m0, calibrationPointC = find_pars_conc()
 PARS_P = [a, b, c]
 PARS_C = [a, b, d, m0]
 STEP = 0.04
+v=0.1
 
 # Pressure benchmarking plotter
 def plot_pressure_benchmark():
@@ -205,6 +209,202 @@ def plot_model_predictions():
     ax1.legend(loc = 'upper center')
     plt.show()
     return
+
+"""
+PLOTTING POSTERIOR
+"""
+def plot_posterior3D(a, b, c, P):	
+    """Plot posterior distribution for each parameter combination
+
+    Args:
+        a (numpy array): a distribution vector
+        b (numpy array): b distribution vector
+        P (numpy array): posterior matrix
+    """
+
+    # plotting variables
+    azim = 15.		# azimuth at which surfaces are shown
+    
+    # a and b combination
+    Ab, Ba = np.meshgrid(a, b, indexing='ij')
+    Pab = np.zeros(Ab.shape)
+    for i in range(len(a)):
+        for j in range(len(b)):
+            Pab[i][j] = sum([P[i][j][k] for k in range(len(c))])
+
+    # a and c combination			
+    Ac, Ca = np.meshgrid(a, c, indexing='ij')
+    Pac = np.zeros(Ac.shape)
+    for i in range(len(a)):
+        for k in range(len(c)):
+            Pac[i][k] = sum([P[i][j][k] for j in range(len(b))])
+    
+    # b and c combination		
+    Bc, Cb = np.meshgrid(b, c, indexing='ij')
+    Pbc = np.zeros(Bc.shape)
+    for j in range(len(b)):
+        for k in range(len(c)):
+            Pbc[j][k] = sum([P[i][j][k] for i in range(len(a))])
+            
+    # plotting
+    fig = plt.figure(figsize=[20.0,15.])
+    ax1 = fig.add_subplot(221, projection='3d')
+    ax1.plot_surface(Ab, Ba, Pab, rstride=1, cstride=1, cmap=cm.Oranges, lw = 0.5)
+    ax1.set_xlabel('a')
+    ax1.set_ylabel('b')
+    ax1.set_zlabel('P')
+    ax1.set_xlim([a[0], a[-1]])
+    ax1.set_ylim([b[0], b[-1]])
+    ax1.set_zlim(0., )
+    ax1.view_init(40, azim)
+    
+    ax1 = fig.add_subplot(222, projection='3d')
+    ax1.plot_surface(Ac, Ca, Pac, rstride=1, cstride=1,cmap=cm.Oranges, lw = 0.5)
+    ax1.set_xlabel('a')
+    ax1.set_ylabel('c')
+    ax1.set_zlabel('P')
+    ax1.set_xlim([a[0], a[-1]])
+    ax1.set_ylim([c[0], c[-1]])
+    ax1.set_zlim(0., )
+    ax1.view_init(40, azim)
+
+    ax1 = fig.add_subplot(223, projection='3d')
+    ax1.plot_surface(Bc, Cb, Pbc, rstride=1, cstride=1,cmap=cm.Oranges, lw = 0.5)
+    ax1.set_xlabel('b')
+    ax1.set_ylabel('c')
+    ax1.set_zlabel('P')
+    ax1.set_xlim([b[0], b[-1]])
+    ax1.set_ylim([c[0], c[-1]])
+    ax1.set_zlim(0., )
+    ax1.view_init(40, azim)
+    
+    # save and show
+    plt.show()
+
+def plot_posterior2D(a, b, P):	
+    """Plot posterior distribution
+
+    Args:
+        a (numpy array): a distribution vector
+        b (numpy array): b distribution vector
+        P (numpy array): posterior matrix
+    """
+    
+    # grid of parameter values: returns every possible combination of parameters in a and b
+    A, B = np.meshgrid(a, b)
+    
+    # plotting
+    fig = plt.figure(figsize=[10., 7.])				# open figure
+    ax1 = fig.add_subplot(111, projection='3d')		# create 3D axes
+    ax1.plot_surface(A, B, P, rstride=1, cstride=1,cmap=cm.Oranges, lw = 0.5,edgecolor='k')	# show surface
+    
+    # plotting upkeep
+    ax1.set_xlabel('a')
+    ax1.set_ylabel('b')
+    ax1.set_zlabel('P')
+    ax1.set_xlim([a[0], a[-1]])
+    ax1.set_ylim([b[0], b[-1]])
+    ax1.set_zlim(0., )
+    ax1.view_init(40, 100.)
+    
+    # save and show
+    plt.show()
+
+"""
+PLOTTING SAMPLING
+"""
+def plot_samples3D(a, b, c, P, samples):
+    # plotting variables
+    azim = 15.		# azimuth at which surfaces are shown
+    # a and b combination
+    Ab, Ba = np.meshgrid(a, b, indexing='ij')
+    Pab = np.zeros(Ab.shape)
+    for i in range(len(a)):
+        for j in range(len(b)):
+            Pab[i][j] = sum([P[i][j][k] for k in range(len(c))])
+
+    # a and c combination			
+    Ac, Ca = np.meshgrid(a, c, indexing='ij')
+    Pac = np.zeros(Ac.shape)
+    for i in range(len(a)):
+        for k in range(len(c)):
+            Pac[i][k] = sum([P[i][j][k] for j in range(len(b))])
+    
+    # b and c combination		
+    Bc, Cb = np.meshgrid(b, c, indexing='ij')
+    Pbc = np.zeros(Bc.shape)
+    for j in range(len(b)):
+        for k in range(len(c)):
+            Pbc[j][k] = sum([P[i][j][k] for i in range(len(a))])
+
+    
+    s = np.array([np.sum((np.interp(TIME_P, *solve_pressure_ode(pressure_ode_model, TIME_P[0], PRESSURE[0], TIME_P[-1], STEP, [a, b, c]))-PRESSURE)**2)/v for a,b,c in samples])
+    p = np.exp(-s/2.)
+    
+    
+    p = p/np.max(p)*np.max(P)*1.2
+
+    # plotting
+    fig = plt.figure(figsize=[20.0,15.])
+    ax1 = fig.add_subplot(221, projection='3d')
+    ax1.plot_surface(Ab, Ba, Pab, rstride=1, cstride=1, cmap=cm.Oranges, lw = 0.5)
+    ax1.set_xlabel('a')
+    ax1.set_ylabel('b')
+    ax1.set_zlabel('P')
+    ax1.set_xlim([a[0], a[-1]])
+    ax1.set_ylim([b[0], b[-1]])
+    ax1.set_zlim(0., )
+    ax1.view_init(40, azim)
+    ax1.plot(samples[:,0],samples[:,1],p,'k.')
+    
+    ax1 = fig.add_subplot(222, projection='3d')
+    ax1.plot_surface(Ac, Ca, Pac, rstride=1, cstride=1,cmap=cm.Oranges, lw = 0.5)
+    ax1.set_xlabel('a')
+    ax1.set_ylabel('c')
+    ax1.set_zlabel('P')
+    ax1.set_xlim([a[0], a[-1]])
+    ax1.set_ylim([c[0], c[-1]])
+    ax1.set_zlim(0., )
+    ax1.view_init(40, azim)
+    ax1.plot(samples[:,0],samples[:,-1],p,'k.')
+
+    ax1 = fig.add_subplot(223, projection='3d')
+    ax1.plot_surface(Bc, Cb, Pbc, rstride=1, cstride=1,cmap=cm.Oranges, lw = 0.5)
+    ax1.set_xlabel('b')
+    ax1.set_ylabel('c')
+    ax1.set_zlabel('P')
+    ax1.set_xlim([b[0], b[-1]])
+    ax1.set_ylim([c[0], c[-1]])
+    ax1.set_zlim(0., )
+    ax1.view_init(40, azim)
+    ax1.plot(samples[:,1],samples[:,-1],p,'k.')
+    
+    # save and show
+    plt.show()
+    
+def plot_samples2D(a, b, P, samples):
+    # plotting
+    fig = plt.figure(figsize=[10., 7.])				# open figure
+    ax1 = fig.add_subplot(111, projection='3d')		# create 3D axes
+    A, B = np.meshgrid(a, b, indexing='ij')
+   	# show surface
+    
+    
+    s = np.array([np.sum((np.interp(TIME_P, *solve_pressure_ode(pressure_ode_model, TIME_P[0], PRESSURE[0], TIME_P[-1], STEP, [a, b, c_best]))-PRESSURE)**2)/v for a,b,c in samples])
+    p = np.exp(-s/2.)
+    p = p/np.max(p)*np.max(P)*1.2
+        
+    ax1.plot(*samples.T,p,'k.')
+
+    # plotting upkeep
+    ax1.set_xlabel('a')
+    ax1.set_ylabel('b')
+    ax1.set_zlabel('P')
+    ax1.set_zlim(0., )
+    ax1.view_init(40, 100.)
+    
+    # save and show
+    plt.show()
 
 if __name__ == "__main__":
     #plot_pressure_benchmark()

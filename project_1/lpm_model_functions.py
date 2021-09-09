@@ -83,6 +83,51 @@ def find_pars_pressure():
     parameters, covariance = curve_fit(curve_fit_pressure, ts[0:trainingSize], pi[0:trainingSize+1], pars)
     # return pars, a, b, c and also calibration point.
     return parameters[0], parameters[1], parameters[2], trainingSize
+def find_pars_pressure_covariance():
+    '''
+    Finds the parameters for the pressure ODE which gives best fit to the data
+    using scipy curve_fit.
+    Parameters:
+    -----------
+    t : array-like
+        array of time values
+    a : float
+         value of parameter a
+    b : float
+        value of parameter b
+    c : float
+        value of parameter c
+    Returns:
+    --------
+    parameters[0]: float
+                   value of parameter a which gives best fit.
+    parameters[1]: float
+                   value of parameter b which gives best fit.
+    parameters[2]: float
+                   value of parameter c which gives best fit.
+    trainingSize: float
+                 gives the index at where claibration point is in the time array.
+    '''
+    # initalise time array
+    nt = int(np.ceil((TIME_P[-1]-TIME_P[0])/STEP))	# get number of time points
+    ts = TIME_P[0]+np.arange(nt+1)*STEP			    # initial time array
+
+    # initial parameter guesses
+    a = 0.001
+    b = 0.09
+    c = 0.003
+    pars = [a, b, c]
+
+    # make input pressure same length as the output from the solver
+    pi = np.interp(ts, TIME_P, PRESSURE)
+
+
+    trainingSize = math.ceil(0.8*len(ts)) # get length training array
+
+    # use curve_fit to find pars that give best fit ODE to data.
+    parameters, covariance = curve_fit(curve_fit_pressure, ts[0:trainingSize], pi[0:trainingSize+1], pars)                
+    # return pars, a, b, c and also calibration point.
+    return parameters[0], parameters[1], parameters[2], covariance
 def get_q_dq(t):
     '''
     Returns net flow rate q, and dq/dt, for number of points as in vector input, t.

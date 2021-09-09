@@ -4,7 +4,6 @@ from matplotlib import pyplot as plt
 import matplotlib.ticker as mtick
 import math
 from scipy.optimize import curve_fit
-from scipy.interpolate import interp1d
 from load_data import *
 from conc_2 import *
 
