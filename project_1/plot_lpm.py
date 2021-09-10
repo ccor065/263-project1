@@ -56,7 +56,8 @@ def plot_pressure_benchmark():
                        # concentration
 
     # Get values for pressure to Benchmark using the numerical solver.
-    t_odeA, p_odeA = solve_pressure_const_q(pressure_ode_model, time[0], PRESSURE[0], time[-1], STEP, [q,  *PARS_P])
+    conc = 0
+    t_odeA, p_odeA = solve_pressure_const_q(pressure_ode_model, time[0], PRESSURE[0], time[-1], STEP, [q, conc,  *PARS_P])
     # Get values of pressure using the analytical solution
     p_ana = pressure_analytical_solution(time, q, *PARS_P)
 
@@ -220,7 +221,6 @@ PLOTTING POSTERIOR
 """
 def plot_posterior3D(a, b, c, P):
     """Plot posterior distribution for each parameter combination
-
     Args:
         a (numpy array): a distribution vector
         b (numpy array): b distribution vector
@@ -288,7 +288,6 @@ def plot_posterior3D(a, b, c, P):
 
 def plot_posterior2D(a, b, P):
     """Plot posterior distribution
-
     Args:
         a (numpy array): a distribution vector
         b (numpy array): b distribution vector
