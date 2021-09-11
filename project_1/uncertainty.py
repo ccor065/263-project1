@@ -14,6 +14,7 @@ v = 0.1
 def grid_search():
     
 	# number of values considered for each parameter within a given interval
+    # larger N provides better visualization of s(theta) and posterior density function
     N = 5
 
     a = np.linspace(a_best/4,a_best*1.75, N)
@@ -39,7 +40,7 @@ def grid_search():
     Pint = np.sum(P)*(a[1]-a[0])*(b[1]-b[0])*(c[1]-c[0])
     P = P/Pint    
         
-    plot_posterior3D(a, b, c, P=P)
+    #plot_posterior3D(a, b, c, P=P)
 
     return a,b,c,P        
         
@@ -47,7 +48,7 @@ def construct_samples(a,b,c,P,N_samples):
     
     
     samples = np.random.multivariate_normal(mean, covariance, N_samples)
-    plot_samples3D(a,b,c,P,samples)
+    #plot_samples3D(a,b,c,P,samples)
 
     return samples
 

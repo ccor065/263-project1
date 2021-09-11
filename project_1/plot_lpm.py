@@ -17,7 +17,6 @@ a_best, b_best, c_best, calibrationPointP = find_pars_pressure()
 d, m0, calibrationPointC = find_pars_conc()
 PARS_P = [a, b, c]
 PARS_C = [a, b, d, m0]
-print(PARS_C)
 STEP = 0.04
 v=0.1
 
