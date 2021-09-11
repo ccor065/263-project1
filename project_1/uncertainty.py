@@ -6,6 +6,7 @@ from plot_lpm import *
 STEP = 0.1
 tp, pA = load_pressure_data()
 a_best,b_best,c_best,covariance = find_pars_pressure_covariance()
+covariance = np.multiply(covariance, 80)
 mean = [a_best, b_best, c_best]
 v = 0.1
 
@@ -13,20 +14,17 @@ v = 0.1
 def grid_search():
     
 	# number of values considered for each parameter within a given interval
-    N = 10
+    N = 5
 
-    a = np.linspace(a_best/2,a_best*1.5, N)
-    b = np.linspace(b_best/2,b_best*1.5, N)
-    c = np.linspace(c_best/2, c_best*1.5, N)
+    a = np.linspace(a_best/4,a_best*1.75, N)
+    b = np.linspace(b_best/4,b_best*1.75, N)
+    c = np.linspace(c_best/4, c_best*1.75, N)
     
     # grid of paramter values
     A, B, C = np.meshgrid(a, b, c, indexing='ij')
     
     # empty 3D matrix for objective function
     S = np.zeros(A.shape)
-    
-    #error variance --> WHAT SHOULD THE VARIANCE BE
-
     
     for i in range(len(a)):
         for j in range(len(b)):
@@ -48,17 +46,9 @@ def grid_search():
 def construct_samples(a,b,c,P,N_samples):
     
     
-    covariance = [[ 6.30849660e-10,  5.63881376e-08, -7.74700619e-10],
- [ 5.63881376e-08,  5.34482603e-06, -7.08162879e-08],
- [-7.74700619e-10, -7.08162879e-08,  4.56847077e-09]]
-
-    covariance = np.multiply(covariance, 100)
-    
     samples = np.random.multivariate_normal(mean, covariance, N_samples)
     plot_samples3D(a,b,c,P,samples)
-    print(covariance)
-    print("hello")
-    print(samples)
+
     return samples
 
 
@@ -80,9 +70,9 @@ def model_emsemble(samples):
     plt.show()
 
 
+if __name__ == "__main__":
+    a,b,c,P = grid_search()
+    samples = construct_samples(a,b,c,P,100)
+    model_emsemble(samples)
 
-a,b,c,P = grid_search()
-samples = construct_samples(a,b,c,P,100)
-model_emsemble(samples)
-print('success')
 

@@ -17,6 +17,7 @@ a_best, b_best, c_best, calibrationPointP = find_pars_pressure()
 d, m0, calibrationPointC = find_pars_conc()
 PARS_P = [a, b, c]
 PARS_C = [a, b, d, m0]
+print(PARS_C)
 STEP = 0.04
 v=0.1
 
@@ -415,6 +416,6 @@ def plot_samples2D(a, b, P, samples):
     plt.show()
 
 if __name__ == "__main__":
-    plot_pressure_benchmark()
+    #plot_pressure_benchmark()
     #plot_conc_benchmark()
-    #plot_model_predictions()
+    plot_model_predictions()
