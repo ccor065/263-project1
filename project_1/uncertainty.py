@@ -13,7 +13,7 @@ v = 0.1
 def grid_search():
     
 	# number of values considered for each parameter within a given interval
-    N = 20
+    N = 10
 
     a = np.linspace(a_best/2,a_best*1.5, N)
     b = np.linspace(b_best/2,b_best*1.5, N)
@@ -48,9 +48,16 @@ def grid_search():
 def construct_samples(a,b,c,P,N_samples):
     
     
+    covariance = [[ 6.30849660e-10,  5.63881376e-08, -7.74700619e-10],
+ [ 5.63881376e-08,  5.34482603e-06, -7.08162879e-08],
+ [-7.74700619e-10, -7.08162879e-08,  4.56847077e-09]]
+
+    covariance = np.multiply(covariance, 100)
+    
     samples = np.random.multivariate_normal(mean, covariance, N_samples)
     plot_samples3D(a,b,c,P,samples)
-    
+    print(covariance)
+    print("hello")
     print(samples)
     return samples
 
@@ -63,7 +70,7 @@ def model_emsemble(samples):
          tm, pm = solve_pressure_ode(pressure_ode_model, tp[0], 
                                         pA[0], tp[-1], STEP, [a, b, c])
          pm = np.interp(tp, tm, pm)
-         ax.plot(tp, pm, 'k-', lw=0.25,alpha=0.2)
+         ax.plot(tp, pm, 'b', lw=0.25,alpha=0.2)
     ax.plot([],[],'k-', lw=0.5,alpha=0.4, label='model ensemble')
     ax.axvline(2004, color='b', linestyle=':', label='calibration/forecast')
     ax.errorbar(tp,pA,yerr=v,fmt='ro', label='data')         

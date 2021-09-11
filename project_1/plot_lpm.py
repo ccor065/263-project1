@@ -57,7 +57,7 @@ def plot_pressure_benchmark():
 
     # Get values for pressure to Benchmark using the numerical solver.
     conc = 0
-    t_odeA, p_odeA = solve_pressure_const_q(pressure_ode_model, time[0], PRESSURE[0], time[-1], STEP, [q, conc,  *PARS_P])
+    t_odeA, p_odeA = solve_pressure_const_q(pressure_ode_model, time[0], PRESSURE[0], time[-1], STEP, [q, *PARS_P])
     # Get values of pressure using the analytical solution
     p_ana = pressure_analytical_solution(time, q, *PARS_P)
 
@@ -415,6 +415,6 @@ def plot_samples2D(a, b, P, samples):
     plt.show()
 
 if __name__ == "__main__":
-    #plot_pressure_benchmark()
-    plot_conc_benchmark()
+    plot_pressure_benchmark()
+    #plot_conc_benchmark()
     #plot_model_predictions()
