@@ -102,7 +102,7 @@ def plot_pressure_benchmark():
 
     plt.scatter(ts, misfit, s = 9, marker = 'x', color = 'r', label = 'Misfit')
     plt.axhline(y=0, color = 'black', linestyle = '--')
-    plt.ylabel('Misfit',fontsize=10)
+    plt.ylabel('Pressure Misfit (MPa)',fontsize=10)
     plt.xlabel('Time',fontsize=10)
 
     plt.title('Misfit ODE vs interpolated data')
@@ -116,9 +116,13 @@ def plot_conc_benchmark():
     PLOT DATA vs ODE
     """
     t_ode, c_ode = solve_conc_ode(conc_ODE_model, TIME_C[0], CONC[0], TIME_C[-1], STEP, PRESSURE[0], PARS_C)
-    plt.plot(t_ode, c_ode,color = 'black', label = 'ODE')
-    plt.scatter(TIME_C, CONC,color='r', marker = 'x', label ='Observations')
+    plt.plot(t_ode, c_ode * 100,color = 'black', label = 'ODE')
+    plt.scatter(TIME_C, CONC * 100,color='r', marker = 'x', label ='Observations')
     plt.legend()
+    plt.title('ODE vs Data')
+    plt.xlabel('Year')
+    plt.ylabel('Concentration (% weight)')
+    plt.savefig('model_vs_data_conc', dpi = 300)
     plt.show()
 
     #### Benchmark numerical(ode) solution against analytical solution
@@ -133,7 +137,7 @@ def plot_conc_benchmark():
     """
     PLOT Convergence
     """
-
+    t_ode, c_ode = solve_conc_ode(conc_ODE_model, TIME_C[0], CONC[0], TIME_C[-1], STEP, PRESSURE[0], PARS_C)
 
     step_nums = np.linspace(0.05, 0.8, 200)
     end_c = np.zeros(len(step_nums))
@@ -164,12 +168,12 @@ def plot_conc_benchmark():
     for i in range(len(c_data_interp)):
         misfit[i] = c_ode[i] - c_data_interp[i]
 
-    plt.scatter(ts, misfit, s = 9, color = 'r')
+    plt.scatter(ts, misfit * 100, s = 9, color = 'r')
     plt.axhline(y=0, color = 'black', linestyle = '--')
-    plt.ylabel('Misfit',fontsize=10)
+    plt.ylabel('Concentration Misfit (% weight)',fontsize=10)
     plt.xlabel('Time',fontsize=10)
 
-    plt.title('Misfit ODE vs interpolated data for concentration')
+    plt.title('Misfit ODE vs interpolated data')
     plt.savefig('misfitModel_vs_data_conc',dpi=300)
     plt.show()
 
@@ -411,6 +415,6 @@ def plot_samples2D(a, b, P, samples):
     plt.show()
 
 if __name__ == "__main__":
-    plot_pressure_benchmark()
+    #plot_pressure_benchmark()
     plot_conc_benchmark()
     #plot_model_predictions()
