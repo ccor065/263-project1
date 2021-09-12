@@ -591,12 +591,12 @@ def solve_conc_ode_ana(f, t0, y0, t1, h, p0, pars=[]):
 """
 ## Forecasting function
 """
-def get_p_conc_forecast(t, pars_conc, pars_pressure, q, q_newInj):
+def get_p_conc_forecast(t, pars_conc, pars_pressure, p0, c0,  q, q_newInj):
     dq = 0
     p = np.zeros(len(t))
     conc = np.zeros(len(t))
-    p[0] = PRESSURE[-1]
-    conc[0] = CONC[-1]
+    p[0] = p0
+    conc[0] = c0
     for i in range(len(t) - 1):
         conc[i+1] = improved_euler_step(conc_ODE_model, t[i], conc[i], STEP, CONC[0], [q_newInj, p[i], PRESSURE[0], *pars_conc])
         p[i+1] = improved_euler_step(pressure_ode_model, t[i], p[i], STEP, PRESSURE[0], [dq, q,  *pars_pressure])

@@ -214,13 +214,13 @@ def plot_model_predictions():
 
     # stop injection
     injRates = [0., 0.5, 1., 2., 4.] #different injection rate multipliers
-    colours = ['orange', 'green', 'mediumseagreen', 'blue', 'slategrey'] #for graph
+    colours = ['orange', 'green', 'red', 'blue', 'slategrey'] #for graph
     labels = ['qc02 = 0.0 kg/s', 'qc02 = %.2f kg/s',  'qc02 = %.2f kg/s ','qc02 = %.2f kg/s ','qc02 = %.2f kg/s'] #for graph
 
     for i in range(len(injRates)):
         q_net = q_prod[-1] - (q_inj[-1])*injRates[i]
         q_newInj = (q_inj[-1])*injRates[i]
-        t, p, c = get_p_conc_forecast(ts, PARS_C, PARS_P , q_net, q_newInj)
+        t, p, c = get_p_conc_forecast(ts, PARS_C, PARS_P, p_ode[-1], c_ode[-1], q_net, q_newInj)
         ax1.plot(t, p, color=colours[i])
         ax2.plot(t, c, color=colours[i], label = labels[i] %(q_newInj))
 
