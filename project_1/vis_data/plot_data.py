@@ -51,7 +51,7 @@ fig.legend(bbox_to_anchor =(0.5,0.88))
 plt.savefig('c02wt_vs_injection.png',dpi=300)
 plt.show()
 
-'''
+
 
 fig,ax = plt.subplots()
 # Plot pressure over time
@@ -126,4 +126,3 @@ ax.set_title('CO2 Injection Rate vs CO2wt%\n')
 fig.legend()
 plt.savefig('co2wt_vs_pressure.png',dpi=300)
 plt.show()
-'''
