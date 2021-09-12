@@ -5,12 +5,12 @@ from lpm_model_functions import *
 #global variables
 STEP = 0.1
 tp, pA = load_pressure_data()
-a_best,b_best,c_best,covariance = find_pars_pressure_covariance()
+a_best,b_best,c_best,cp, covariance = find_pars_pressure()
 
 
-d_best, m0_best, conc_covar = find_pars_conc_covar()
+d_best, m0_best, cp_c, conc_covar = find_pars_conc()
 tc, cA = load_c02_wt_data()
-increase_var = 30
+increase_var = 1
 covariance = np.multiply(covariance, increase_var)
 conc_covar = np.multiply(conc_covar, increase_var)
 

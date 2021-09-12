@@ -13,9 +13,8 @@ from uncertainty import *
 ## Define global Variables
 TIME_P, PRESSURE = load_pressure_data()
 TIME_C, CONC = load_c02_wt_data()
-a, b, c, calibrationPointP = find_pars_pressure()
-a_best, b_best, c_best, calibrationPointP = find_pars_pressure()
-d, m0, calibrationPointC = find_pars_conc()
+a, b, c, calibrationPointP, covar_pressue = find_pars_pressure()
+d, m0, calibrationPointC, covar_conc = find_pars_conc()
 PARS_P = [a, b, c]
 PARS_C = [a, b, d, m0]
 STEP = 0.04
@@ -452,9 +451,9 @@ def plot_conc_pressure_uncertainty(samples):
                              CONC[0], TIME_C[-1], STEP, PRESSURE[0], [a, b, d, m0])
         ax2.plot(tc, cm, 'black', lw=0.3,alpha=0.2)
 
-    ax1.axvline(2004, color='b', linestyle=':', label='calibration/forecast')
-    ax1.errorbar(TIME_P, PRESSURE, yerr=0.1,fmt='ro', label='data')
-    ax2.errorbar(TIME_C, CONC, yerr=0.001,fmt='ro', label='data')
+    ax1.axvline(2004, color='b', linestyle=':', label='Calibration')
+    ax1.errorbar(TIME_P, PRESSURE, yerr=0.6,fmt='ro', label='data')
+    ax2.errorbar(TIME_C, CONC, yerr=0.005,fmt='ro', label='data')
 
     ax1.axhline(PRESSURE[0], linestyle = "--", color = 'grey', label = 'Ambient Pressure P0')
     ax2.set_title("Concentration C02wt%")
@@ -486,9 +485,11 @@ def plot_uncertainty_forecast(samples):
                              CONC[0], TIME_C[-1], STEP, PRESSURE[0], [a, b, d, m0])
         ax2.plot(tc, cm, 'black', lw=0.3)
 
-    ax1.axvline(2004, color='b', linestyle=':', label='calibration/forecast')
-    ax1.errorbar(TIME_P, PRESSURE, yerr=0.1,fmt='ro', label='data')
-    ax2.errorbar(TIME_C, CONC, yerr=0.001, fmt='ro', label='data')
+    ax1.axvline(tm[calibrationPointP], color='b', linestyle=':', label='Calibration Point')
+    ax2.axvline(tc[calibrationPointC], color='b', linestyle=':', label='Calibration Point')
+
+    ax1.errorbar(TIME_P, PRESSURE, yerr=0.6,fmt='ro', elinewidth = 0.3, label='data')
+    ax2.errorbar(TIME_C, CONC, yerr=0.005, fmt='ro',elinewidth = 0.3, label='data')
 
     # Set up paramters for forecast
     endTime = TIME_P[-1] + 30                     # 30 years projection

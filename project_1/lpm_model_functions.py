@@ -9,7 +9,9 @@ from load_data import *
 # Define global variables
 TIME_P, PRESSURE = load_pressure_data()
 TIME_C, CONC = load_c02_wt_data()
-STEP = 0.04
+STEP = 0.05
+SIGMA_CONC = 0.005
+SIGMA_P = 0.6
 """
 ### PRESSURE FUNCTIONs
 """
@@ -68,9 +70,9 @@ def find_pars_pressure():
     ts = TIME_P[0]+np.arange(nt+1)*STEP			    # initial time array
 
     # initial parameter guesses
-    a = 0.001
-    b = 0.09
-    c = 0.003
+    a = 0.1
+    b = 0.1
+    c = 0.1
     pars = [a, b, c]
 
     # make input pressure same length as the output from the solver
@@ -78,56 +80,12 @@ def find_pars_pressure():
 
 
     trainingSize = math.ceil(0.8*len(ts)) # get length training array
-
+    sigma = np.ones(trainingSize+1) *SIGMA_P
     # use curve_fit to find pars that give best fit ODE to data.
-    parameters, covariance = curve_fit(curve_fit_pressure, ts[0:trainingSize], pi[0:trainingSize+1], pars)
+    parameters, covariance = curve_fit(curve_fit_pressure, ts[0:trainingSize], pi[0:trainingSize+1], p0=pars, sigma =sigma,absolute_sigma = True)
     # return pars, a, b, c and also calibration point.
-    return parameters[0], parameters[1], parameters[2], trainingSize
-def find_pars_pressure_covariance():
-    '''
-    Finds the parameters for the pressure ODE which gives best fit to the data
-    using scipy curve_fit.
-    Parameters:
-    -----------
-    t : array-like
-        array of time values
-    a : float
-         value of parameter a
-    b : float
-        value of parameter b
-    c : float
-        value of parameter c
-    Returns:
-    --------
-    parameters[0]: float
-                   value of parameter a which gives best fit.
-    parameters[1]: float
-                   value of parameter b which gives best fit.
-    parameters[2]: float
-                   value of parameter c which gives best fit.
-    trainingSize: float
-                 gives the index at where claibration point is in the time array.
-    '''
-    # initalise time array
-    nt = int(np.ceil((TIME_P[-1]-TIME_P[0])/STEP))	# get number of time points
-    ts = TIME_P[0]+np.arange(nt+1)*STEP			    # initial time array
+    return parameters[0], parameters[1], parameters[2], trainingSize, covariance
 
-    # initial parameter guesses
-    a = 0.001
-    b = 0.09
-    c = 0.003
-    pars = [a, b, c]
-
-    # make input pressure same length as the output from the solver
-    pi = np.interp(ts, TIME_P, PRESSURE)
-
-
-    trainingSize = math.ceil(0.8*len(ts)) # get length training array
-
-    # use curve_fit to find pars that give best fit ODE to data.
-    parameters, covariance = curve_fit(curve_fit_pressure, ts[0:trainingSize], pi[0:trainingSize+1], pars)
-    # return pars, a, b, c and also calibration point.
-    return parameters[0], parameters[1], parameters[2], covariance
 def get_q_dq(t):
     '''
     Returns net flow rate q, and dq/dt, for number of points as in vector input, t.
@@ -373,7 +331,7 @@ def curve_fit_conc(t, d, m0):
             numerical solution to the concentration ODE given the specific parameters
     '''
 
-    a,b, __,_ = find_pars_pressure()
+    a,b, c,cp, covar = find_pars_pressure()
     pars = [a, b, d, m0]
     p0 = PRESSURE[0]
     time, concODE = solve_conc_ode(conc_ODE_model, t[0], CONC[0], t[-1], STEP, p0, pars)
@@ -397,41 +355,16 @@ def find_pars_conc():
 
     nt = int(np.ceil((TIME_C[-1]-TIME_C[0])/STEP))		# compute number of Euler STEPs to take
     ts = TIME_C[0]+np.arange(nt+1)*STEP			    # x array
-    d = 0.1774
-    m0 = 11000
+    d = 1
+    m0 = 100000
 
     pars = [d, m0]
     ci = np.interp(ts, TIME_C, CONC)
     trainingSize = math.ceil(0.8*len(ts))
-    parameters, covar = curve_fit(curve_fit_conc, ts[0:trainingSize], ci[0:trainingSize+1], pars)
-    return parameters[0], parameters[1], trainingSize
-def find_pars_conc_covar():
-    '''
-    Finds the parameters for the pressure ODE which gives best fit to the data
-    using scipy curve_fit.
-    Parameters:
-    -----------
-    None
-    Returns:
-    --------
-    parameters[0]: float
-                   value of parameter d which gives best fit.
-    parameters[1]: float
-                   value of parameter m0 which gives best fit.
-    covar: array-like
-                    co-variance of the paramters
-    '''
+    sigma = np.ones(trainingSize+1) * SIGMA_CONC
+    parameters, covar = curve_fit(curve_fit_conc, ts[0:trainingSize], ci[0:trainingSize+1], p0=pars, sigma =sigma,absolute_sigma = True)
+    return parameters[0], parameters[1], trainingSize, covar
 
-    nt = int(np.ceil((TIME_C[-1]-TIME_C[0])/STEP))		# compute number of Euler STEPs to take
-    ts = TIME_C[0]+np.arange(nt+1)*STEP			    # x array
-    d = 0.1774
-    m0 = 11000
-
-    pars = [d, m0]
-    ci = np.interp(ts, TIME_C, CONC)
-    trainingSize = math.ceil(0.8*len(ts))
-    parameters, covar = curve_fit(curve_fit_conc, ts[0:trainingSize], ci[0:trainingSize+1], pars)
-    return parameters[0], parameters[1], covar
 
 ## Analytical Solution Solver
 def conc_analytical_solution(m0, d):
