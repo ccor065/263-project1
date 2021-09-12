@@ -384,14 +384,7 @@ def find_pars_conc():
     using scipy curve_fit.
     Parameters:
     -----------
-    t : array-like
-        array of time values
-    a : float
-         value of parameter a
-    b : float
-        value of parameter b
-    c : float
-        value of parameter c
+    None
     Returns:
     --------
     parameters[0]: float
@@ -412,6 +405,33 @@ def find_pars_conc():
     trainingSize = math.ceil(0.8*len(ts))
     parameters, covar = curve_fit(curve_fit_conc, ts[0:trainingSize], ci[0:trainingSize+1], pars)
     return parameters[0], parameters[1], trainingSize
+def find_pars_conc_covar():
+    '''
+    Finds the parameters for the pressure ODE which gives best fit to the data
+    using scipy curve_fit.
+    Parameters:
+    -----------
+    None
+    Returns:
+    --------
+    parameters[0]: float
+                   value of parameter d which gives best fit.
+    parameters[1]: float
+                   value of parameter m0 which gives best fit.
+    covar: array-like
+                    co-variance of the paramters
+    '''
+
+    nt = int(np.ceil((TIME_C[-1]-TIME_C[0])/STEP))		# compute number of Euler STEPs to take
+    ts = TIME_C[0]+np.arange(nt+1)*STEP			    # x array
+    d = 0.1774
+    m0 = 11000
+
+    pars = [d, m0]
+    ci = np.interp(ts, TIME_C, CONC)
+    trainingSize = math.ceil(0.8*len(ts))
+    parameters, covar = curve_fit(curve_fit_conc, ts[0:trainingSize], ci[0:trainingSize+1], pars)
+    return parameters[0], parameters[1], covar
 
 ## Analytical Solution Solver
 def conc_analytical_solution(m0, d):
