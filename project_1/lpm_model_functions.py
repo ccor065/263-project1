@@ -71,9 +71,9 @@ def find_pars_pressure():
     ts = TIME_P[0]+np.arange(nt+1)*STEP			    # initial time array
 
     # initial parameter guesses
-    a = 0.1
+    a = 0.002
     b = 0.1
-    c = 0.1
+    c = 0.001
     pars = [a, b, c]
 
     # make input pressure same length as the output from the solver
@@ -356,8 +356,8 @@ def find_pars_conc():
 
     nt = int(np.ceil((TIME_C[-1]-TIME_C[0])/STEP))		# compute number of Euler STEPs to take
     ts = TIME_C[0]+np.arange(nt+1)*STEP			    # x array
-    d = 1
-    m0 = 100000
+    d = 0.2
+    m0 = 8000
 
     pars = [d, m0]
     ci = np.interp(ts, TIME_C, CONC)

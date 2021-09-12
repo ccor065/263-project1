@@ -21,7 +21,6 @@ PARS_C = [a, b, d, m0]
 STEP = 0.04
 v=0.1
 
-
 # Pressure benchmarking plotter
 def plot_pressure_benchmark():
     """
@@ -46,10 +45,12 @@ def plot_pressure_benchmark():
     # plot the data observations
     ax1.scatter(TIME_P, PRESSURE, color='r', marker = 'x', label ='Observations')
     ax1.axvline(t_ode[calibrationPointP], linestyle = ':', label = 'Calibration Point')
-
+    pars_formatted = []
+    for i in range(len(PARS_P)):
+        pars_formatted.append(np.format_float_scientific(PARS_P[i], precision = 3))
     # plot the model solution
     ax1.plot(t_ode, p_ode, color = 'k', label = 'ODE')
-    ax1.set_title('Pressure ODE vs Data')
+    ax1.set_title('Pressure ODE vs Data\n a=%s b=%s c=%s'% (pars_formatted[0],pars_formatted[1],pars_formatted[2]))
     ax1.set_ylabel("Pressure(MPa)")
     ax1.set_xlabel("Year")
     ax1.legend()
@@ -71,9 +72,7 @@ def plot_pressure_benchmark():
     ## Plot analytical solution and numerical solver solution against eachother
     ax2.plot(t_odeA, p_odeA, color = 'black', label = 'ODE')
     ax2.scatter(time, p_ana, color = 'r', marker = 'x', label = 'Analytical Solution')
-    pars_formatted = []
-    for i in range(len(PARS_P)):
-        pars_formatted.append(np.format_float_scientific(PARS_P[i], precision = 3))
+
     ax2.set_title('Pressure ODE vs Analytical solution  \n a=%s b=%s c=%s q=4.00'% (pars_formatted[0],pars_formatted[1],pars_formatted[2]))
     ax2.legend()
     ax2.set_xlabel("Year")
@@ -135,18 +134,21 @@ def plot_conc_benchmark():
     """
     PLOT DATA vs ODE
     """
+    parsc_formatted = []
+    for i in range(len(PARS_C)):
+        parsc_formatted.append(np.format_float_scientific(PARS_C[i], precision = 3))
     t_ode, c_ode = solve_conc_ode(conc_ODE_model, TIME_C[0], CONC[0], TIME_C[-1], STEP, PRESSURE[0], PARS_C)
     plt.plot(t_ode, c_ode * 100,color = 'black', label = 'ODE')
     plt.scatter(TIME_C, CONC * 100,color='r', marker = 'x', label ='Observations')
     plt.legend()
-    plt.title('Concentration ODE vs Data')
+    plt.title('Concentration ODE vs Data\n a=%s b=%s d=%s m0=%s'% (parsc_formatted[0], parsc_formatted[1],parsc_formatted[2], parsc_formatted[3]))
     plt.xlabel('Year')
     plt.ylabel('Concentration (% weight)')
     plt.savefig('model_vs_data_conc', dpi = 300)
     plt.show()
 
     #### Benchmark numerical(ode) solution against analytical solution
-    time, c_ana = conc_analytical_solution(m0, d)
+    time, c_ana = conc_analytical_solution(PARS_C[3], PARS_C[2])
     # plot analytical solution
     plt.plot(time, c_ana,  color = 'r', marker = 'x', label = 'Analytical Solution')
     # plot the model solution
@@ -244,7 +246,7 @@ def plot_model_predictions():
     labels = ['qc02 = 0.0 kg/s', 'qc02 = %.2f kg/s',  'qc02 = %.2f kg/s ','qc02 = %.2f kg/s ','qc02 = %.2f kg/s'] #for graph
 
     c02_groundwater_leaks = np.zeros((len(injRates), len(ts)))
-
+    print("Forecasting results")
     for i in range(len(injRates)):
         q_net = q_prod[-1] - (q_inj[-1])*injRates[i]
         q_newInj = (q_inj[-1])*injRates[i]
@@ -255,7 +257,11 @@ def plot_model_predictions():
             if (p[j] > PRESSURE[0]):
                 c02_groundwater_leaks[i, j] = (PARS_P[1] / PARS_P[0]) * (p[j] - PRESSURE[0]) * c[j]
         #c02_groundwater_leaks[i, :] = np.cumsum(c02_groundwater_leaks[i, :])
-
+        print('------')
+        print("injection rate %.2f" %q_newInj)
+        print("pressure %.2f"% p[-1])
+        print("concentration %.4f"% c[-1])
+    print('------')
 
 
     ax2.axhline(0.10, linestyle = "--", color = 'grey', label = '10 wt% C02' )    #ax1.axvline(t_ode[calibrationPointP], linestyle = '--', label = 'Calibration Point')
@@ -564,7 +570,7 @@ def plot_uncertainty_forecast(samples):
     ax2.axvline(tc[calibrationPointC], color='b', linestyle=':', label='Calibration Point')
 
     ax1.errorbar(TIME_P, PRESSURE, yerr=0.6,fmt='ro', elinewidth = 0.3, label='Pressure Data')
-    ax2.errorbar(TIME_C, CONC, yerr=0.005, fmt='ro',elinewidth = 0.3, label='Pressure Data')
+    ax2.errorbar(TIME_C, CONC, yerr=0.005, fmt='ro',elinewidth = 0.3, label='Concentration Data')
 
     # Set up paramters for forecast
     endTime = TIME_P[-1] + 30                     # 30 years projection
@@ -595,6 +601,9 @@ def plot_uncertainty_forecast(samples):
     cUncertaintyRange = [[0,0] for i in range(5)]
     pValues = [[] for i in range(5)]
     cValues = [[] for i in range(5)]
+    p_finals = np.zeros([len(injRates), len(samples)])
+    c_finals = np.zeros([len(injRates), len(samples)])
+
 
     for d, m0, a, b, c in samples:
         pars_c = [a, b, d, m0]
@@ -603,32 +612,32 @@ def plot_uncertainty_forecast(samples):
             q_net = q_prod[-1] - (q_inj[-1])*injRates[i]
             q_newInj = (q_inj[-1])*injRates[i]
             t, p, c = get_p_conc_forecast(ts, pars_c, pars_p, pm[-1], cm[-1], q_net, q_newInj)
-
+            p_finals[i][j] = p[-1]
+            c_finals[i][j] = c[-1]
             pValues[i].append(p[-1])
             cValues[i].append(c[-1])
 
             ax1.plot(t, p, color=colours[i],alpha= 0.2, linewidth = 1)
             ax2.plot(t, c, color=colours[i], alpha= 0.2,linewidth = 1)
         j = j + 1
-    print("pressure")
-    p_mins = p_finals.min(axis =1)
-    p_maxs = p_finals.max(axis =1)
-    print(p_mins)
-    print(p_maxs)
-    print("conc")
-    c_mins = c_finals.min(axis =1)
-    c_maxs = c_finals.max(axis =1)
-    print(c_mins)
-    print(c_maxs)
+
+    # print conf intervals
+    print("Confidence intervals")
+    for i in range(len(injRates)):
+        print("-------")
+        print("Injection rate " ,(injRates[i])*q_inj[-1])
+        p_conf = np.percentile(p_finals[i][:],  [5, 95], axis = 0)
+        c_conf = np.percentile(c_finals[i][:], [5,95], axis = 0)
+
+        print("pressure")
+        print(p_conf)
+        print("conc")
+        print(c_conf)
+    print("-------")
+
     np.savetxt('final pressure uncertainty.csv', p_finals)
     np.savetxt('final conc uncertainty.csv', c_finals)
-        for i in range(5):
-            pUncertaintyRange[i][0], pUncertaintyRange[i][1] = st.t.interval(alpha=0.95, df=len(pValues[i])-1, loc=np.mean(pValues[i]), scale=st.sem(pValues[i]))
-            cUncertaintyRange[i][0], cUncertaintyRange[i][1] = st.t.interval(alpha=0.95, df=len(cValues[i])-1, loc=np.mean(cValues[i]), scale=st.sem(cValues[i]))
 
-
-        print(pUncertaintyRange)
-        print(cUncertaintyRange)
 
     ax2.axhline(0.10, linestyle = "--", color = 'grey', label = '10 wt% C02' )    #ax1.axvline(t_ode[calibrationPointP], linestyle = '--', label = 'Calibration Point')
     ax1.axhline(PRESSURE[0], linestyle = "--", color = 'grey', label = 'Ambient Pressure P0')
@@ -651,9 +660,9 @@ def plot_uncertainty_forecast(samples):
 
 if __name__ == "__main__":
     plot_pressure_benchmark()
-    #plot_conc_benchmark()
-    #plot_model_predictions()
+    plot_conc_benchmark()
+    plot_model_predictions()
     n_samples = 100
     samples = construct_all_samples(n_samples)
-    #plot_conc_pressure_uncertainty(samples)
+    plot_conc_pressure_uncertainty(samples)
     plot_uncertainty_forecast(samples)
