@@ -9,7 +9,3 @@ def test_improved_euler_step():
     by_hand_soln = -3.5
 
     assert abs(yk1 - by_hand_soln) < 1.e-10
-
-def test_improved_euler_step_conc():
-
-    yk1 = test_improved_euler_step_conc
