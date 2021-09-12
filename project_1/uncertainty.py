@@ -9,7 +9,7 @@ covariance = np.multiply(covariance, 80)
 mean = [a_best, b_best, c_best]
 d, m0, calibrationPointC = find_pars_conc()
 PARS_P = [a_best, b_best, c_best]
-PARS_C = [a, b, d, m0]
+PARS_C = [a_best, b_best, d, m0]
 
 
 v = 0.1
@@ -106,12 +106,12 @@ def forecast_ensemble(samples):
     labels = ['qc02 = 0.0 kg/s', 'qc02 = %.2f kg/s',  'qc02 = %.2f kg/s ','qc02 = %.2f kg/s ','qc02 = %.2f kg/s'] #for graph
     
     for i in range(len(injRates)):
-        # for a, b, c in samples:
-        q_net = q_prod[-1] - (q_inj[-1])*injRates[i]
-        q_newInj = (q_inj[-1])*injRates[i]
-        t, p, c = get_p_conc_forecast(ts, PARS_C, PARS_P, p_ode[-1], c_ode[-1], q_net, q_newInj)
-        ax1.plot(t, p, color=colours[i])
-        ax2.plot(t, c, color=colours[i], label = labels[i] %(q_newInj))
+        for a, b, c in samples:
+            q_net = q_prod[-1] - (q_inj[-1])*injRates[i]
+            q_newInj = (q_inj[-1])*injRates[i]
+            t, p, co2 = get_p_conc_forecast(ts, [a,b,d,m0], [a,b,c], p_ode[-1], c_ode[-1], q_net, q_newInj)
+            ax1.plot(t, p, color=colours[i], alpha=0.1)
+            ax2.plot(t, co2, color=colours[i], alpha=0.1)
 
     ax2.axhline(0.10, linestyle = "--", color = 'crimson', label = '10 wt% C02' )    #ax1.axvline(t_ode[calibrationPointP], linestyle = '--', label = 'Calibration Point')
     ax1.axhline(PRESSURE[0], linestyle = "--", color = 'orange', label = 'Ambient Pressure P0')
@@ -125,7 +125,7 @@ def forecast_ensemble(samples):
 
 if __name__ == "__main__":
     a,b,c,P = grid_search()
-    samples = construct_samples(a,b,c,P,100)
+    samples = construct_samples(a,b,c,P,50)
     model_emsemble(samples)
     forecast_ensemble(samples)
     
