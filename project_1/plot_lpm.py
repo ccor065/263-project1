@@ -42,10 +42,8 @@ def plot_pressure_benchmark():
 
     # plot the model solution
     ax1.plot(t_ode, p_ode, color = 'k', label = 'ODE')
-    pars_formatted = []
-    for i in range(len(PARS_P)):
-        pars_formatted.append(np.format_float_scientific(PARS_P[i], precision = 3))
-    ax1.set_title('ODE vs Data \n a=%s b=%s c=%s'% (pars_formatted[0],pars_formatted[1],pars_formatted[2]))
+
+    ax1.set_title('ODE vs Data')
     ax1.set_ylabel("Pressure(MPa)")
     ax1.set_xlabel("Year")
     ax1.legend()
@@ -67,7 +65,10 @@ def plot_pressure_benchmark():
     ## Plot analytical solution and numerical solver solution against eachother
     ax2.plot(t_odeA, p_odeA, color = 'black', label = 'ODE')
     ax2.scatter(time, p_ana, color = 'r', marker = 'x', label = 'Analytical Solution')
-    ax2.set_title('ODE vs Analytical solution')
+    pars_formatted = []
+    for i in range(len(PARS_P)):
+        pars_formatted.append(np.format_float_scientific(PARS_P[i], precision = 3))
+    ax2.set_title('ODE vs Analytical solution  \n a=%s b=%s c=%s'% (pars_formatted[0],pars_formatted[1],pars_formatted[2]))
     ax2.legend()
     plt.savefig('model_vs_ODE_analytical.png',dpi=300)
     plt.show()
@@ -135,6 +136,10 @@ def plot_conc_benchmark():
     # plot the model solution
     t_ode, c_ode = solve_conc_ode_ana(conc_ODE_model, TIME_C[0], CONC[0], TIME_C[-1], STEP, PRESSURE[0], PARS_C)
     plt.plot(t_ode, c_ode,color = 'black', label = 'ODE')
+    parsc_formatted = []
+    for i in range(len(PARS_C)):
+        parsc_formatted.append(np.format_float_scientific(PARS_C[i], precision = 3))
+    plt.title('ODE vs Analytical solution  \n a=%s b=%s d=%s m0=%s'% (parsc_formatted[0],parsc_formatted[1],parsc_formatted[2], parsc_formatted[3]))
     plt.legend()
     plt.show()
     """
@@ -183,19 +188,19 @@ def plot_conc_benchmark():
 # Plot Model predictions
 def plot_model_predictions():
     fig, (ax1, ax2) = plt.subplots(1, 2)
-    fig.set_figwidth(12)
-    plt.subplots_adjust(None, None, None,None, wspace=None, hspace=None)
+    fig.set_figwidth(13)
+    plt.subplots_adjust(None, None, 0.85 ,None, wspace=None, hspace=None)
 
 
     # model
     t_ode, p_ode = solve_pressure_ode(pressure_ode_model, TIME_P[0], PRESSURE[0], TIME_P[-1], STEP, PARS_P)
     # plot the data observations
-    p1, = ax1.plot(TIME_P, PRESSURE,color='k')
+    p1 = ax1.scatter(TIME_P, PRESSURE,color='k', s= 9, label = "Observations")
     # plot the model solution
-    ax1.plot(t_ode, p_ode, color = 'r')
+    ax1.plot(t_ode, p_ode, color = 'r', label = "ODE model")
     tc_ode, c_ode = solve_conc_ode(conc_ODE_model, TIME_C[0], CONC[0], TIME_C[-1], STEP, PRESSURE[0], PARS_C)
-    p2, = ax2.plot(tc_ode, c_ode, color = 'r')
-    ax2.plot(TIME_C, CONC, color = 'k')
+    p2, = ax2.plot(tc_ode, c_ode, color = 'r', label = "ODE model")
+    ax2.scatter(TIME_C, CONC, color = 'k', s= 9, label ="Observations")
 
     # Set up paramters for forecast
     endTime = TIME_P[-1] + 30                     # 30 years projection
@@ -209,17 +214,23 @@ def plot_model_predictions():
 
     # stop injection
     injRates = [0., 0.5, 1., 2., 4.] #different injection rate multipliers
-    colours = ['green', 'orange', 'blue', 'cyan', 'pink'] #for graph
-    labels = ['Stop, injection =', 'Halve injection', 'Same injection', 'Double injection', 'Quadruple injection'] #for graph
+    colours = ['orange', 'green', 'mediumseagreen', 'blue', 'slategrey'] #for graph
+    labels = ['qc02 = 0.0 kg/s', 'qc02 = %.2f kg/s',  'qc02 = %.2f kg/s ','qc02 = %.2f kg/s ','qc02 = %.2f kg/s'] #for graph
 
     for i in range(len(injRates)):
         q_net = q_prod[-1] - (q_inj[-1])*injRates[i]
         q_newInj = (q_inj[-1])*injRates[i]
         t, p, c = get_p_conc_forecast(ts, PARS_C, PARS_P , q_net, q_newInj)
-        ax1.plot(t, p, color=colours[i], label = labels[i])
-        ax2.plot(t, c, color=colours[i], label = labels[i])
+        ax1.plot(t, p, color=colours[i])
+        ax2.plot(t, c, color=colours[i], label = labels[i] %(q_newInj))
 
-    ax1.legend(loc = 'upper center')
+    ax2.axhline(0.10, linestyle = "--", color = 'crimson', label = '10 wt% C02' )    #ax1.axvline(t_ode[calibrationPointP], linestyle = '--', label = 'Calibration Point')
+    ax1.axhline(PRESSURE[0], linestyle = "--", color = 'orange', label = 'Ambient Pressure P0')
+    ax2.set_title("Concentration C02wt%")
+    ax1.set_title("Pressure MPa")
+    plt.suptitle("30 Year Forecast for Ohaaki Geothermal Field")
+    ax2.legend(bbox_to_anchor=(1,1), loc="upper left")
+    ax1.legend()
     plt.show()
     return
 
