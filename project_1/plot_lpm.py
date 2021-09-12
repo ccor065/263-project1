@@ -23,7 +23,12 @@ v=0.1
 # Pressure benchmarking plotter
 def plot_pressure_benchmark():
     """
-    dsfds
+    This function plots all of the benchmarking for the pressure ODE.
+        this includes:
+        data vs ODE
+        Analytical solution vs ODE
+        Convergence testing
+        RMS misfit
     """
     #Configure plots
     fig, (ax1, ax2) = plt.subplots(1, 2)
@@ -114,7 +119,14 @@ def plot_pressure_benchmark():
 
 # Conc Benchmarking PLotter
 def plot_conc_benchmark():
-
+    """
+    This function plots all of the benchmarking for the pressure ODE.
+        this includes:
+        data vs ODE
+        Analytical solution vs ODE
+        Convergence testing
+        RMS misfit
+    """
     """
     PLOT DATA vs ODE
     """
@@ -138,7 +150,7 @@ def plot_conc_benchmark():
     parsc_formatted = []
     for i in range(len(PARS_C)):
         parsc_formatted.append(np.format_float_scientific(PARS_C[i], precision = 3))
-    plt.title('ODE vs Analytical solution  \n a=%s b=%s d=%s m0=%s'% (parsc_formatted[0],parsc_formatted[1],parsc_formatted[2], parsc_formatted[3]))
+    plt.title('ODE vs Analytical solution  \n  d=%s m0=%s'% (parsc_formatted[2], parsc_formatted[3]))
     plt.legend()
     #plt.savefig('conc_analytical_solution.png',dpi=300)
 
@@ -188,6 +200,10 @@ def plot_conc_benchmark():
 
 # Plot Model predictions
 def plot_model_predictions():
+    """
+    This function plots the model predictions for both the pressure and
+    concentration ode, without the uncertainty.
+    """
     fig, (ax1, ax2) = plt.subplots(1, 2)
     fig.set_figwidth(13)
     plt.subplots_adjust(None, None, 0.85 ,None, wspace=None, hspace=None)
@@ -440,6 +456,16 @@ def plot_samples2D(a, b, P, samples):
 plotting uncertainty
 """
 def plot_conc_pressure_uncertainty(samples):
+    """
+    This function plots the ODE with uncertainty within the scope of the data range
+
+    Parameters:
+    Samples : array - like
+            number of parameters by  number of samples
+            randome sample range of parameters
+
+
+    """
     fig, (ax1, ax2) = plt.subplots(1, 2)
     fig.set_figwidth(13)
     plt.subplots_adjust(None, None, 0.85 ,None, wspace=None, hspace=None)
@@ -475,6 +501,14 @@ def plot_conc_pressure_uncertainty(samples):
 
     plt.show()
 def plot_uncertainty_forecast(samples):
+    """
+    This function plots the ODE and the forecasting with uncertainty 
+
+    Parameters:
+    Samples : array - like
+            number of parameters by  number of samples
+            randome sample range of parameters
+    """
     fig, (ax1, ax2) = plt.subplots(1, 2)
     fig.set_figwidth(13)
     plt.subplots_adjust(None, None, 0.85 ,None, wspace=None, hspace=None)
