@@ -1,4 +1,4 @@
-from plot_lpm import *
+from main import *
 from lpm_model_functions import *
 
 

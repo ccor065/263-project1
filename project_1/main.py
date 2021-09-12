@@ -235,18 +235,23 @@ def plot_model_predictions():
     labels = ['qc02 = 0.0 kg/s', 'qc02 = %.2f kg/s',  'qc02 = %.2f kg/s ','qc02 = %.2f kg/s ','qc02 = %.2f kg/s'] #for graph
 
     c02_groundwater_leaks = np.zeros((len(injRates), len(ts)))
-
+    
+    endValues = []
+    
     for i in range(len(injRates)):
         q_net = q_prod[-1] - (q_inj[-1])*injRates[i]
         q_newInj = (q_inj[-1])*injRates[i]
         t, p, c = get_p_conc_forecast(ts, PARS_C, PARS_P, p_ode[-1], c_ode[-1], q_net, q_newInj)
         ax1.plot(t, p, color=colours[i])
         ax2.plot(t, c, color=colours[i], label = labels[i] %(q_newInj))
+        endValues.append(p[-1])
+        endValues.append(c[-1])
+
         for j in range(len(p)):
             if (p[j] > PRESSURE[0]):
                 c02_groundwater_leaks[i, j] = (PARS_P[1] / PARS_P[0]) * (p[j] - PRESSURE[0]) * c[j]
         #c02_groundwater_leaks[i, :] = np.cumsum(c02_groundwater_leaks[i, :])
-
+        print(endValues)
 
     ax2.axhline(0.10, linestyle = "--", color = 'grey', label = '10 wt% C02' )    #ax1.axvline(t_ode[calibrationPointP], linestyle = '--', label = 'Calibration Point')
     ax1.axhline(PRESSURE[0], linestyle = "--", color = 'grey', label = 'Ambient Pressure P0')
