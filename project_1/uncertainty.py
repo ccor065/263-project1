@@ -1,4 +1,3 @@
-from plot_lpm import *
 from lpm_model_functions import *
 
 
@@ -6,6 +5,8 @@ from lpm_model_functions import *
 STEP = 0.1
 tp, pA = load_pressure_data()
 a_best,b_best,c_best,cp, covariance = find_pars_pressure()
+np.random.seed(983765419)
+
 
 
 d_best, m0_best, cp_c, conc_covar = find_pars_conc()
