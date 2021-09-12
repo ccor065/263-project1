@@ -49,17 +49,15 @@ def grid_search():
     Pint = np.sum(P)*(a[1]-a[0])*(b[1]-b[0])*(c[1]-c[0])
     P = P/Pint
 
-    #plot_posterior3D(a, b, c, P=P)
-
     return a,b,c,P
 def grid_search_conc():
 
 	# number of values considered for each parameter within a given interval
     # larger N provides better visualization of s(theta) and posterior density function
-    N = 5
+    N = 20
 
-    d = np.linspace(d_best/4,d_best*1.75, N)
-    m0 = np.linspace(m0_best/4,m0_best*1.75, N)
+    d = np.linspace(d_best/10,d_best*1.9, N)
+    m0 = np.linspace(m0_best/10,m0_best*1.9, N)
 
     # grid of paramter values
     D, M0 = np.meshgrid(d, m0, indexing='ij')
@@ -79,17 +77,21 @@ def grid_search_conc():
     Cint = np.sum(C)*(d[1]-d[0])*(m0[1]-m0[0])
     C = C/Cint
 
-    #plot_posterior3D(a, b, c, P=P)
 
     return d, m0, C
 def construct_all_samples(N_samples):
     samples_conc = np.random.multivariate_normal(mean_conc, conc_covar, N_samples)
     samples_p = np.random.multivariate_normal(mean, covariance, N_samples)
     samples = np.append(samples_conc, samples_p, 1)
+    
     return samples
-
 
 
 if __name__ == "__main__":
     a,b,c,P = grid_search()
     d, m0, C = grid_search_conc()
+    plot_posterior3D(a, b, c, P=P)
+    plot_posterior2D(d, m0, P=C)
+    samples = construct_all_samples(100)
+    plot_samples3D(a, b, c, P, samples[1])
+    plot_samples2D(a, b, C, samples[0])
