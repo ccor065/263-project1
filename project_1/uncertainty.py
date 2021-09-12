@@ -101,6 +101,11 @@ def construct_samples_conc(d,m0, C, N_samples):
     #plot_samples3D(a,b,c,P,samples)
 
     return samples
+def construct_all_samples(N_samples):
+    samples_conc = np.random.multivariate_normal(mean_conc, conc_covar, N_samples)
+    samples_p = np.random.multivariate_normal(mean, covariance, N_samples)
+    samples = np.append(samples_conc, samples_p, 1)
+    return samples
 
 def model_emsemble_pressure(samples):
 
@@ -216,7 +221,7 @@ def forecast_ensemble(samples):
     tc_ode, c_ode = solve_conc_ode(conc_ODE_model, TIME_C[0], CONC[0], TIME_C[-1], STEP, PRESSURE[0], PARS_C)
     p2, = ax2.plot(tc_ode, c_ode, color = 'r', label = "ODE model")
     ax2.scatter(TIME_C, CONC, color = 'k', s= 9, label ="Observations")
-    
+
     # Set up paramters for forecast
     endTime = TIME_P[-1] + 30                     # 30 years projection
     nt = int(np.ceil((endTime-TIME_P[-1])/STEP))	# compute number of Euler steps to take
@@ -231,14 +236,15 @@ def forecast_ensemble(samples):
     injRates = [0., 0.5, 1., 2., 4.] #different injection rate multipliers
     colours = ['orange', 'green', 'red', 'blue', 'slategrey'] #for graph
     labels = ['qc02 = 0.0 kg/s', 'qc02 = %.2f kg/s',  'qc02 = %.2f kg/s ','qc02 = %.2f kg/s ','qc02 = %.2f kg/s'] #for graph
-    
-    for i in range(len(injRates)):
-        for a, b, c in samples:
-            q_net = q_prod[-1] - (q_inj[-1])*injRates[i]
-            q_newInj = (q_inj[-1])*injRates[i]
-            t, p, co2 = get_p_conc_forecast(ts, [a,b,d,m0], [a,b,c], p_ode[-1], c_ode[-1], q_net, q_newInj)
-            ax1.plot(t, p, color=colours[i], alpha=0.1)
-            ax2.plot(t, co2, color=colours[i], alpha=0.1)
+    for d, m0, a, b, c in samples:
+        pars_c = [a,b,d,m0]
+        pars_p = [a,b, c]
+        for i in range(len(injRates)):
+                q_net = q_prod[-1] - (q_inj[-1])*injRates[i]
+                q_newInj = (q_inj[-1])*injRates[i]
+                t, p, co2 = get_p_conc_forecast(ts, [a,b,d,m0], [a,b,c], p_ode[-1], c_ode[-1], q_net, q_newInj)
+                ax1.plot(t, p, color=colours[i], alpha=0.1)
+                ax2.plot(t, co2, color=colours[i], alpha=0.1)
 
     ax2.axhline(0.10, linestyle = "--", color = 'crimson', label = '10 wt% C02' )    #ax1.axvline(t_ode[calibrationPointP], linestyle = '--', label = 'Calibration Point')
     ax1.axhline(PRESSURE[0], linestyle = "--", color = 'orange', label = 'Ambient Pressure P0')
@@ -254,21 +260,15 @@ if __name__ == "__main__":
 
 
     a,b,c,P = grid_search()
-<<<<<<< HEAD
     d, m0, C = grid_search_conc()
     samples_pressure = construct_samples_pressure(a,b,c,P,100)
     #model_emsemble_pressure(samples_pressure)
     samples_conc = construct_samples_conc(d,m0,C,100)
 
-=======
-    samples = construct_samples(a,b,c,P,50)
-    model_emsemble(samples)
-    forecast_ensemble(samples)
-    
->>>>>>> bc33768d063f1d9f536aaf9e01e4d6320639bd2e
+
+
 
     samples = np.append(samples_conc, samples_pressure, 1)
 
-    print(samples)
     #model_emsemble_concentration(samples)
     model_emsemble_forecast(samples)

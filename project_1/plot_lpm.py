@@ -8,6 +8,7 @@ from load_data import *
 from lpm_model_functions import *
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
+from uncertainty import *
 
 ## Define global Variables
 TIME_P, PRESSURE = load_pressure_data()
@@ -465,13 +466,16 @@ def plot_uncertainty_forecast():
     injRates = [0., 0.5, 1., 2., 4.] #different injection rate multipliers
     colours = ['orange', 'green', 'red', 'blue', 'steelblue'] #for graph
     labels = ['qc02 = 0.0 kg/s', 'qc02 = %.2f kg/s',  'qc02 = %.2f kg/s ','qc02 = %.2f kg/s ','qc02 = %.2f kg/s'] #for graph
-
-    for i in range(len(injRates)):
-        q_net = q_prod[-1] - (q_inj[-1])*injRates[i]
-        q_newInj = (q_inj[-1])*injRates[i]
-        t, p, c = get_p_conc_forecast(ts, PARS_C, PARS_P, p_ode[-1], c_ode[-1], q_net, q_newInj)
-        ax1.plot(t, p, color=colours[i])
-        ax2.plot(t, c, color=colours[i], label = labels[i] %(q_newInj))
+    samples = construct_all_samples(50)
+    for d, m0, a, b, c in samples:
+        pars_c = [a, b, d, m0]
+        pars_p = [a, b,c]
+        for i in range(len(injRates)):
+            q_net = q_prod[-1] - (q_inj[-1])*injRates[i]
+            q_newInj = (q_inj[-1])*injRates[i]
+            t, p, c = get_p_conc_forecast(ts, pars_c, pars_p, p_ode[-1], c_ode[-1], q_net, q_newInj)
+            ax1.plot(t, p, color=colours[i])
+            ax2.plot(t, c, color=colours[i], label = labels[i] %(q_newInj))
 
     ax2.axhline(0.10, linestyle = "--", color = 'grey', label = '10 wt% C02' )    #ax1.axvline(t_ode[calibrationPointP], linestyle = '--', label = 'Calibration Point')
     ax1.axhline(PRESSURE[0], linestyle = "--", color = 'grey', label = 'Ambient Pressure P0')
