@@ -9,6 +9,7 @@ from lpm_model_functions import *
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 from uncertainty import *
+import scipy.stats as st
 
 ## Define global Variables
 TIME_P, PRESSURE = load_pressure_data()
@@ -235,23 +236,18 @@ def plot_model_predictions():
     labels = ['qc02 = 0.0 kg/s', 'qc02 = %.2f kg/s',  'qc02 = %.2f kg/s ','qc02 = %.2f kg/s ','qc02 = %.2f kg/s'] #for graph
 
     c02_groundwater_leaks = np.zeros((len(injRates), len(ts)))
-    
-    endValues = []
-    
+
     for i in range(len(injRates)):
         q_net = q_prod[-1] - (q_inj[-1])*injRates[i]
         q_newInj = (q_inj[-1])*injRates[i]
         t, p, c = get_p_conc_forecast(ts, PARS_C, PARS_P, p_ode[-1], c_ode[-1], q_net, q_newInj)
         ax1.plot(t, p, color=colours[i])
         ax2.plot(t, c, color=colours[i], label = labels[i] %(q_newInj))
-        endValues.append(p[-1])
-        endValues.append(c[-1])
-
         for j in range(len(p)):
             if (p[j] > PRESSURE[0]):
                 c02_groundwater_leaks[i, j] = (PARS_P[1] / PARS_P[0]) * (p[j] - PRESSURE[0]) * c[j]
         #c02_groundwater_leaks[i, :] = np.cumsum(c02_groundwater_leaks[i, :])
-        print(endValues)
+
 
     ax2.axhline(0.10, linestyle = "--", color = 'grey', label = '10 wt% C02' )    #ax1.axvline(t_ode[calibrationPointP], linestyle = '--', label = 'Calibration Point')
     ax1.axhline(PRESSURE[0], linestyle = "--", color = 'grey', label = 'Ambient Pressure P0')
@@ -586,6 +582,11 @@ def plot_uncertainty_forecast(samples):
     c_finals = np.zeros((len(injRates), len(samples)))
     j = 0
 
+    pUncertaintyRange = [[0,0] for i in range(5)]
+    cUncertaintyRange = [[0,0] for i in range(5)]
+    pValues = [[] for i in range(5)]
+    cValues = [[] for i in range(5)]
+    
     for d, m0, a, b, c in samples:
         pars_c = [a, b, d, m0]
         pars_p = [a, b,c]
@@ -593,14 +594,21 @@ def plot_uncertainty_forecast(samples):
             q_net = q_prod[-1] - (q_inj[-1])*injRates[i]
             q_newInj = (q_inj[-1])*injRates[i]
             t, p, c = get_p_conc_forecast(ts, pars_c, pars_p, pm[-1], cm[-1], q_net, q_newInj)
-            p_finals[i, j] = p[-1]
-            c_finals[i, j] = c[-1]
+
+            pValues[i].append(p[-1])
+            cValues[i].append(c[-1])
+
             ax1.plot(t, p, color=colours[i],alpha= 0.2, linewidth = 1)
             ax2.plot(t, c, color=colours[i], alpha= 0.2,linewidth = 1)
-        j = j + 1
+        
+    for i in range(5):
+        pUncertaintyRange[i][0], pUncertaintyRange[i][1] = st.t.interval(alpha=0.95, df=len(pValues[i])-1, loc=np.mean(pValues[i]), scale=st.sem(pValues[i])) 
+        cUncertaintyRange[i][0], cUncertaintyRange[i][1] = st.t.interval(alpha=0.95, df=len(cValues[i])-1, loc=np.mean(cValues[i]), scale=st.sem(cValues[i]))
 
-    np.savetxt('final pressure uncertainty.csv', p_finals)
-    np.savetxt('final conc uncertainty.csv', c_finals)
+        
+    print(pUncertaintyRange)
+    print(cUncertaintyRange)
+        
 
     ax2.axhline(0.10, linestyle = "--", color = 'grey', label = '10 wt% C02' )    #ax1.axvline(t_ode[calibrationPointP], linestyle = '--', label = 'Calibration Point')
     ax1.axhline(PRESSURE[0], linestyle = "--", color = 'grey', label = 'Ambient Pressure P0')
