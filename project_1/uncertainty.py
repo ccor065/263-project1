@@ -207,7 +207,7 @@ def model_emsemble_forecast(samples):
 
 
 def forecast_ensemble(samples):
-    fig, (ax1, ax2) = plt.subplots(1, 2)
+    fig, (ax1) = plt.subplots(1)
     fig.set_figwidth(13)
     plt.subplots_adjust(None, None, 0.85 ,None, wspace=None, hspace=None)
 
@@ -219,9 +219,15 @@ def forecast_ensemble(samples):
     # plot the model solution
     ax1.plot(t_ode, p_ode, color = 'r', label = "ODE model")
     tc_ode, c_ode = solve_conc_ode(conc_ODE_model, TIME_C[0], CONC[0], TIME_C[-1], STEP, PRESSURE[0], PARS_C)
+<<<<<<< HEAD
     p2, = ax2.plot(tc_ode, c_ode, color = 'r', label = "ODE model")
     ax2.scatter(TIME_C, CONC, color = 'k', s= 9, label ="Observations")
 
+=======
+    #p2, = ax2.plot(tc_ode, c_ode, color = 'r', label = "ODE model")
+    #ax2.scatter(TIME_C, CONC, color = 'k', s= 9, label ="Observations")
+    
+>>>>>>> da0f820cbd3310273e00084ee64ee7f841dd89bc
     # Set up paramters for forecast
     endTime = TIME_P[-1] + 30                     # 30 years projection
     nt = int(np.ceil((endTime-TIME_P[-1])/STEP))	# compute number of Euler steps to take
@@ -236,6 +242,7 @@ def forecast_ensemble(samples):
     injRates = [0., 0.5, 1., 2., 4.] #different injection rate multipliers
     colours = ['orange', 'green', 'red', 'blue', 'slategrey'] #for graph
     labels = ['qc02 = 0.0 kg/s', 'qc02 = %.2f kg/s',  'qc02 = %.2f kg/s ','qc02 = %.2f kg/s ','qc02 = %.2f kg/s'] #for graph
+<<<<<<< HEAD
     for d, m0, a, b, c in samples:
         pars_c = [a,b,d,m0]
         pars_p = [a,b, c]
@@ -245,13 +252,23 @@ def forecast_ensemble(samples):
                 t, p, co2 = get_p_conc_forecast(ts, [a,b,d,m0], [a,b,c], p_ode[-1], c_ode[-1], q_net, q_newInj)
                 ax1.plot(t, p, color=colours[i], alpha=0.1)
                 ax2.plot(t, co2, color=colours[i], alpha=0.1)
+=======
+    
+    for i in range(len(injRates)):
+        for a, b, c in samples:
+            q_net = q_prod[-1] - (q_inj[-1])*injRates[i]
+            q_newInj = (q_inj[-1])*injRates[i]
+            t, p, co2 = get_p_conc_forecast(ts, [a,b,d,m0], [a,b,c], p_ode[-1], c_ode[-1], q_net, q_newInj)
+            ax1.plot(t, p, color=colours[i], alpha=0.1)
+            #ax2.plot(t, co2, color=colours[i], alpha=0.1)
+>>>>>>> da0f820cbd3310273e00084ee64ee7f841dd89bc
 
-    ax2.axhline(0.10, linestyle = "--", color = 'crimson', label = '10 wt% C02' )    #ax1.axvline(t_ode[calibrationPointP], linestyle = '--', label = 'Calibration Point')
+    #ax2.axhline(0.10, linestyle = "--", color = 'crimson', label = '10 wt% C02' )    #ax1.axvline(t_ode[calibrationPointP], linestyle = '--', label = 'Calibration Point')
     ax1.axhline(PRESSURE[0], linestyle = "--", color = 'orange', label = 'Ambient Pressure P0')
-    ax2.set_title("Concentration C02wt%")
+    #ax2.set_title("Concentration C02wt%")
     ax1.set_title("Pressure MPa")
     plt.suptitle("30 Year Forecast for Ohaaki Geothermal Field")
-    ax2.legend(bbox_to_anchor=(1,1), loc="upper left")
+    #ax2.legend(bbox_to_anchor=(1,1), loc="upper left")
     ax1.legend()
     plt.show()
 
