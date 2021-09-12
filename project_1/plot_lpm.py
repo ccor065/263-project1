@@ -214,7 +214,7 @@ def plot_model_predictions():
 
     # stop injection
     injRates = [0., 0.5, 1., 2., 4.] #different injection rate multipliers
-    colours = ['orange', 'green', 'red', 'blue', 'slategrey'] #for graph
+    colours = ['orange', 'green', 'red', 'blue', 'steelblue'] #for graph
     labels = ['qc02 = 0.0 kg/s', 'qc02 = %.2f kg/s',  'qc02 = %.2f kg/s ','qc02 = %.2f kg/s ','qc02 = %.2f kg/s'] #for graph
 
     for i in range(len(injRates)):
@@ -224,13 +224,18 @@ def plot_model_predictions():
         ax1.plot(t, p, color=colours[i])
         ax2.plot(t, c, color=colours[i], label = labels[i] %(q_newInj))
 
-    ax2.axhline(0.10, linestyle = "--", color = 'crimson', label = '10 wt% C02' )    #ax1.axvline(t_ode[calibrationPointP], linestyle = '--', label = 'Calibration Point')
-    ax1.axhline(PRESSURE[0], linestyle = "--", color = 'orange', label = 'Ambient Pressure P0')
+    ax2.axhline(0.10, linestyle = "--", color = 'grey', label = '10 wt% C02' )    #ax1.axvline(t_ode[calibrationPointP], linestyle = '--', label = 'Calibration Point')
+    ax1.axhline(PRESSURE[0], linestyle = "--", color = 'grey', label = 'Ambient Pressure P0')
     ax2.set_title("Concentration C02wt%")
     ax1.set_title("Pressure MPa")
     plt.suptitle("30 Year Forecast for Ohaaki Geothermal Field")
     ax2.legend(bbox_to_anchor=(1,1), loc="upper left")
     ax1.legend()
+    ax1.set_xlabel("Time(year)")
+    ax2.set_xlabel("Time(year)")
+
+    ax1.set_ylabel("Pressure MPa")
+    ax2.set_ylabel("C02 Concentration (wt proportion)")
     plt.show()
     return
 
