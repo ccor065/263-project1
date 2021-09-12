@@ -216,12 +216,19 @@ def plot_model_predictions():
     colours = ['orange', 'green', 'red', 'blue', 'steelblue'] #for graph
     labels = ['qc02 = 0.0 kg/s', 'qc02 = %.2f kg/s',  'qc02 = %.2f kg/s ','qc02 = %.2f kg/s ','qc02 = %.2f kg/s'] #for graph
 
+    c02_groundwater_leaks = np.zeros((len(injRates), len(ts)))
+
     for i in range(len(injRates)):
         q_net = q_prod[-1] - (q_inj[-1])*injRates[i]
         q_newInj = (q_inj[-1])*injRates[i]
         t, p, c = get_p_conc_forecast(ts, PARS_C, PARS_P, p_ode[-1], c_ode[-1], q_net, q_newInj)
         ax1.plot(t, p, color=colours[i])
         ax2.plot(t, c, color=colours[i], label = labels[i] %(q_newInj))
+        for j in range(len(p)):
+            if (p[j] > PRESSURE[0]):
+                c02_groundwater_leaks[i, j] = (PARS_P[1] / PARS_P[0]) * (p[j] - PRESSURE[0]) * c[j]
+        #c02_groundwater_leaks[i, :] = np.cumsum(c02_groundwater_leaks[i, :])
+        
 
     ax2.axhline(0.10, linestyle = "--", color = 'grey', label = '10 wt% C02' )    #ax1.axvline(t_ode[calibrationPointP], linestyle = '--', label = 'Calibration Point')
     ax1.axhline(PRESSURE[0], linestyle = "--", color = 'grey', label = 'Ambient Pressure P0')
@@ -231,13 +238,34 @@ def plot_model_predictions():
     ax2.legend(bbox_to_anchor=(1,1), loc="upper left")
     ax1.legend()
     ax1.set_xlabel("Time(year)")
-    ax2.set_xlabel("Time(year)")
+    ax2.set_xlabel
 
     ax1.set_ylabel("Pressure MPa")
     ax2.set_ylabel("C02 Concentration (wt proportion)")
+
     plt.savefig('forecast_no_uncertain',dpi=300)
 
     plt.show()
+
+    fig2, ax3 = plt.subplots(1, 1)
+
+    colours = ['black', 'black', 'black', 'black', 'steelblue'] #for graph
+
+    for i in range(len(injRates)):
+        if (i == 0):
+            ax3.plot(t, c02_groundwater_leaks[i], color = colours[i], label = 'qc02 = 0.0 kg/s - 98.60 kg/s')
+        elif (i == 4):
+            ax3.plot(t, c02_groundwater_leaks[i], color = colours[i], label = 'qc02 = 197.20 kg/s')
+        else:
+            ax3.plot(t, c02_groundwater_leaks[i], color = colours[i])
+    
+    ax3.set_title("CO2 leak into groundwater")
+    ax3.set_ylabel("CO2 leak (kg/s)")
+    ax3.set_xlabel("Time(year)")
+    ax3.legend()
+
+    plt.show()
+
     return
 
 """
@@ -526,7 +554,7 @@ def plot_uncertainty_forecast(samples):
     ax1.axhline(PRESSURE[0], linestyle = "--", color = 'grey', label = 'Ambient Pressure P0')
     ax2.set_title("Concentration C02wt%")
     ax1.set_title("Pressure MPa")
-    plt.suptitle("30 Year Forecast for Ohaaki Geothermal Field")
+    fig.suptitle("30 Year Forecast for Ohaaki Geothermal Field")
     ax2.legend(bbox_to_anchor=(1,1), loc="upper left")
     ax1.legend()
     ax1.set_xlabel("Time(year)")
@@ -535,16 +563,15 @@ def plot_uncertainty_forecast(samples):
     ax1.set_ylabel("Pressure MPa")
     ax2.set_ylabel("C02 Concentration (wt proportion)")
     plt.savefig('forecast_uncertain',dpi=300)
-
     plt.show()
     return
 
 if __name__ == "__main__":
     #plot_pressure_benchmark()
     #plot_conc_benchmark()
-    #plot_model_predictions()
-    n_samples = 100
-    samples = construct_all_samples(n_samples)
+    plot_model_predictions()
+    #n_samples = 100
+    #samples = construct_all_samples(n_samples)
     #plot_uncertainty_forecast()
     #plot_conc_pressure_uncertainty(samples)
-    plot_uncertainty_forecast(samples)
+    #plot_uncertainty_forecast(samples)
