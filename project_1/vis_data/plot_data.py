@@ -12,7 +12,7 @@ year3, production= np.genfromtxt('cs_q.txt',delimiter=',',skip_header=1).T
 year4, co2_wt= np.genfromtxt('cs_cc.txt',delimiter=',',skip_header=1).T
 
 fig,ax = plt.subplots()
-fig.set_figwidth(8)
+fig.set_figwidth(4)
 # Plot pressure over time
 ax.plot(year2, pressure, 'black', linewidth = 1, label='Pressure in well')
 # Set the y-axis label
@@ -47,7 +47,7 @@ ax.axvline(year1[0], linestyle = ':', label = 'Injection Begins')
 
 ax.set_ylim(0, 80)
 ax.set_title("Comparison of C02 Concentration and CO2 injection.")
-fig.legend(bbox_to_anchor =(0.9,0.9))
+fig.legend(bbox_to_anchor =(0.5,0.88))
 plt.savefig('c02wt_vs_injection.png',dpi=300)
 plt.show()
 

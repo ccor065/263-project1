@@ -38,7 +38,7 @@ def plot_pressure_benchmark():
 
     # plot the data observations
     ax1.scatter(TIME_P, PRESSURE, color='r', marker = 'x', label ='Observations')
-    ax1.axvline(t_ode[calibrationPointP], linestyle = '--', label = 'Calibration Point')
+    ax1.axvline(t_ode[calibrationPointP], linestyle = ':', label = 'Calibration Point')
 
     # plot the model solution
     ax1.plot(t_ode, p_ode, color = 'k', label = 'ODE')
@@ -140,6 +140,8 @@ def plot_conc_benchmark():
         parsc_formatted.append(np.format_float_scientific(PARS_C[i], precision = 3))
     plt.title('ODE vs Analytical solution  \n a=%s b=%s d=%s m0=%s'% (parsc_formatted[0],parsc_formatted[1],parsc_formatted[2], parsc_formatted[3]))
     plt.legend()
+    #plt.savefig('conc_analytical_solution.png',dpi=300)
+
     plt.show()
     """
     PLOT Convergence
@@ -451,9 +453,10 @@ def plot_conc_pressure_uncertainty(samples):
                              CONC[0], TIME_C[-1], STEP, PRESSURE[0], [a, b, d, m0])
         ax2.plot(tc, cm, 'black', lw=0.3,alpha=0.2)
 
-    ax1.axvline(2004, color='b', linestyle=':', label='Calibration')
-    ax1.errorbar(TIME_P, PRESSURE, yerr=0.6,fmt='ro', label='data')
-    ax2.errorbar(TIME_C, CONC, yerr=0.005,fmt='ro', label='data')
+    ax1.axvline(tm[calibrationPointP], color='b', linestyle=':', label='Calibration Point')
+    ax2.axvline(tc[calibrationPointC], color='b', linestyle=':', label='Calibration Point')
+    ax1.errorbar(TIME_P, PRESSURE, yerr=0.6,fmt='ro', elinewidth = 0.3, label='data')
+    ax2.errorbar(TIME_C, CONC, yerr=0.005, fmt='ro',elinewidth = 0.3, label='data')
 
     ax1.axhline(PRESSURE[0], linestyle = "--", color = 'grey', label = 'Ambient Pressure P0')
     ax2.set_title("Concentration C02wt%")
@@ -540,11 +543,10 @@ def plot_uncertainty_forecast(samples):
     return
 
 if __name__ == "__main__":
-    #plot_pressure_benchmark()
-    #plot_conc_benchmark()
-    #plot_model_predictions()
+    plot_pressure_benchmark()
+    plot_conc_benchmark()
+    plot_model_predictions()
     n_samples = 100
     samples = construct_all_samples(n_samples)
-    #plot_uncertainty_forecast()
-    #plot_conc_pressure_uncertainty(samples)
+    plot_conc_pressure_uncertainty(samples)
     plot_uncertainty_forecast(samples)
