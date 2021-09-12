@@ -435,22 +435,60 @@ def plot_samples2D(a, b, P, samples):
     # save and show
     plt.show()
 
-
-def plot_uncertainty_forecast():
+"""
+plotting uncertainty
+"""
+def plot_conc_pressure_uncertainty(samples):
     fig, (ax1, ax2) = plt.subplots(1, 2)
     fig.set_figwidth(13)
     plt.subplots_adjust(None, None, 0.85 ,None, wspace=None, hspace=None)
 
+    for d, m0, a,b,c in samples:
+        tm, pm = solve_pressure_ode(pressure_ode_model, TIME_P[0], PRESSURE[0], TIME_P[-1], STEP, [a, b, c])
 
-    # model
-    t_ode, p_ode = solve_pressure_ode(pressure_ode_model, TIME_P[0], PRESSURE[0], TIME_P[-1], STEP, PARS_P)
-    # plot the data observations
-    p1 = ax1.scatter(TIME_P, PRESSURE,color='k', s= 9, label = "Observations")
-    # plot the model solution
-    ax1.plot(t_ode, p_ode, color = 'r', label = "ODE model")
-    tc_ode, c_ode = solve_conc_ode(conc_ODE_model, TIME_C[0], CONC[0], TIME_C[-1], STEP, PRESSURE[0], PARS_C)
-    p2, = ax2.plot(tc_ode, c_ode, color = 'r', label = "ODE model")
-    ax2.scatter(TIME_C, CONC, color = 'k', s= 9, label ="Observations")
+        ax1.plot(tm, pm, 'black', lw=0.3,alpha=0.2)
+
+        tc, cm = solve_conc_ode(conc_ODE_model, TIME_C[0],
+                             CONC[0], TIME_C[-1], STEP, PRESSURE[0], [a, b, d, m0])
+        ax2.plot(tc, cm, 'black', lw=0.3,alpha=0.2)
+
+    ax1.axvline(2004, color='b', linestyle=':', label='calibration/forecast')
+    ax1.errorbar(TIME_P, PRESSURE, yerr=0.1,fmt='ro', label='data')
+    ax2.errorbar(TIME_C, CONC, yerr=0.001,fmt='ro', label='data')
+
+    ax1.axhline(PRESSURE[0], linestyle = "--", color = 'grey', label = 'Ambient Pressure P0')
+    ax2.set_title("Concentration C02wt%")
+    ax1.set_title("Pressure MPa")
+    plt.suptitle("30 Year Forecast for Ohaaki Geothermal Field")
+    ax2.legend(bbox_to_anchor=(1,1), loc="upper left")
+    ax1.legend()
+    ax1.set_xlabel("Time(year)")
+    ax2.set_xlabel("Time(year)")
+    ax2.set_ylim(0.02,0.08)
+
+    ax1.set_ylabel("Pressure MPa")
+    ax2.set_ylabel("C02 Concentration (wt proportion)")
+    plt.savefig('uncertainty_data',dpi=300)
+
+
+    plt.show()
+def plot_uncertainty_forecast(samples):
+    fig, (ax1, ax2) = plt.subplots(1, 2)
+    fig.set_figwidth(13)
+    plt.subplots_adjust(None, None, 0.85 ,None, wspace=None, hspace=None)
+
+    for d, m0, a,b,c in samples:
+        tm, pm = solve_pressure_ode(pressure_ode_model, TIME_P[0], PRESSURE[0], TIME_P[-1], STEP, [a, b, c])
+
+        ax1.plot(tm, pm, 'black', lw=0.3)
+
+        tc, cm = solve_conc_ode(conc_ODE_model, TIME_C[0],
+                             CONC[0], TIME_C[-1], STEP, PRESSURE[0], [a, b, d, m0])
+        ax2.plot(tc, cm, 'black', lw=0.3)
+
+    ax1.axvline(2004, color='b', linestyle=':', label='calibration/forecast')
+    ax1.errorbar(TIME_P, PRESSURE, yerr=0.1,fmt='ro', label='data')
+    ax2.errorbar(TIME_C, CONC, yerr=0.001, fmt='ro', label='data')
 
     # Set up paramters for forecast
     endTime = TIME_P[-1] + 30                     # 30 years projection
@@ -466,16 +504,22 @@ def plot_uncertainty_forecast():
     injRates = [0., 0.5, 1., 2., 4.] #different injection rate multipliers
     colours = ['orange', 'green', 'red', 'blue', 'steelblue'] #for graph
     labels = ['qc02 = 0.0 kg/s', 'qc02 = %.2f kg/s',  'qc02 = %.2f kg/s ','qc02 = %.2f kg/s ','qc02 = %.2f kg/s'] #for graph
-    samples = construct_all_samples(50)
+    for i in range(len(injRates)):
+        q_net = q_prod[-1] - (q_inj[-1])*injRates[i]
+        q_newInj = (q_inj[-1])*injRates[i]
+        t, p, c = get_p_conc_forecast(ts, PARS_C, PARS_P, pm[-1], cm[-1], q_net, q_newInj)
+        ax1.plot(t, p, color=colours[i], linewidth = 0.3)
+        ax2.plot(t, c, color=colours[i], label = labels[i] %(q_newInj), linewidth = 0.3)
+
     for d, m0, a, b, c in samples:
         pars_c = [a, b, d, m0]
         pars_p = [a, b,c]
         for i in range(len(injRates)):
             q_net = q_prod[-1] - (q_inj[-1])*injRates[i]
             q_newInj = (q_inj[-1])*injRates[i]
-            t, p, c = get_p_conc_forecast(ts, pars_c, pars_p, p_ode[-1], c_ode[-1], q_net, q_newInj)
-            ax1.plot(t, p, color=colours[i])
-            ax2.plot(t, c, color=colours[i], label = labels[i] %(q_newInj))
+            t, p, c = get_p_conc_forecast(ts, pars_c, pars_p, pm[-1], cm[-1], q_net, q_newInj)
+            ax1.plot(t, p, color=colours[i], linewidth = 0.3)
+            ax2.plot(t, c, color=colours[i], linewidth = 0.3)
 
     ax2.axhline(0.10, linestyle = "--", color = 'grey', label = '10 wt% C02' )    #ax1.axvline(t_ode[calibrationPointP], linestyle = '--', label = 'Calibration Point')
     ax1.axhline(PRESSURE[0], linestyle = "--", color = 'grey', label = 'Ambient Pressure P0')
@@ -498,5 +542,8 @@ if __name__ == "__main__":
     #plot_pressure_benchmark()
     #plot_conc_benchmark()
     #plot_model_predictions()
-
-    plot_uncertainty_forecast()
+    n_samples = 100
+    samples = construct_all_samples(n_samples)
+    #plot_uncertainty_forecast()
+    #plot_conc_pressure_uncertainty(samples)
+    plot_uncertainty_forecast(samples)
