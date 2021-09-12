@@ -602,8 +602,8 @@ def plot_uncertainty_forecast(samples):
             ax2.plot(t, c, color=colours[i], alpha= 0.2,linewidth = 1)
         
     for i in range(5):
-        pUncertaintyRange[i][0], pUncertaintyRange[i][1] = st.norm.interval(alpha=0.95, df=len(pValues[i])-1, loc=np.mean(pValues[i]), scale=st.sem(pValues[i])) 
-        cUncertaintyRange[i][0], cUncertaintyRange[i][1] = st.norm.interval(alpha=0.95, df=len(cValues[i])-1, loc=np.mean(cValues[i]), scale=st.sem(cValues[i]))
+        pUncertaintyRange[i][0], pUncertaintyRange[i][1] = st.norm.interval(alpha=0.95, loc=np.mean(pValues[i]), scale=st.sem(pValues[i])) 
+        cUncertaintyRange[i][0], cUncertaintyRange[i][1] = st.norm.interval(alpha=0.95, loc=np.mean(cValues[i]), scale=st.sem(cValues[i]))
 
         
     print(pUncertaintyRange)
