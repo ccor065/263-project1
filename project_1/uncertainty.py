@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+from main import *
+>>>>>>> refs/remotes/origin/main
 from lpm_model_functions import *
 
 
