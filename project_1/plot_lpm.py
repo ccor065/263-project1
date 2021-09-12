@@ -530,7 +530,7 @@ def plot_conc_pressure_uncertainty(samples):
     plt.show()
 def plot_uncertainty_forecast(samples):
     """
-    This function plots the ODE and the forecasting with uncertainty 
+    This function plots the ODE and the forecasting with uncertainty
 
     Parameters:
     Samples : array - like
@@ -605,9 +605,9 @@ def plot_uncertainty_forecast(samples):
 
 if __name__ == "__main__":
     plot_pressure_benchmark()
-    plot_conc_benchmark()
-    plot_model_predictions()
+    #plot_conc_benchmark()
+    #plot_model_predictions()
     n_samples = 100
     samples = construct_all_samples(n_samples)
-    plot_conc_pressure_uncertainty(samples)
-    plot_uncertainty_forecast(samples)
+    #plot_conc_pressure_uncertainty(samples)
+    #plot_uncertainty_forecast(samples)
