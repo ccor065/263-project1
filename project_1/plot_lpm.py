@@ -577,6 +577,10 @@ def plot_uncertainty_forecast(samples):
         ax1.plot(t, p, color=colours[i], linewidth = 0.3)
         ax2.plot(t, c, color=colours[i], label = labels[i] %(q_newInj), linewidth = 0.3)
 
+    p_finals = np.zeros((len(injRates), len(samples)))
+    c_finals = np.zeros((len(injRates), len(samples)))
+    j = 0
+
     for d, m0, a, b, c in samples:
         pars_c = [a, b, d, m0]
         pars_p = [a, b,c]
@@ -584,8 +588,14 @@ def plot_uncertainty_forecast(samples):
             q_net = q_prod[-1] - (q_inj[-1])*injRates[i]
             q_newInj = (q_inj[-1])*injRates[i]
             t, p, c = get_p_conc_forecast(ts, pars_c, pars_p, pm[-1], cm[-1], q_net, q_newInj)
+            p_finals[i, j] = p[-1]
+            c_finals[i, j] = c[-1]
             ax1.plot(t, p, color=colours[i], linewidth = 0.3)
             ax2.plot(t, c, color=colours[i], linewidth = 0.3)
+        j = j + 1
+    
+    np.savetxt('final pressure uncertainty.csv', p_finals)
+    np.savetxt('final conc uncertainty.csv', c_finals)
 
     ax2.axhline(0.10, linestyle = "--", color = 'grey', label = '10 wt% C02' )    #ax1.axvline(t_ode[calibrationPointP], linestyle = '--', label = 'Calibration Point')
     ax1.axhline(PRESSURE[0], linestyle = "--", color = 'grey', label = 'Ambient Pressure P0')
