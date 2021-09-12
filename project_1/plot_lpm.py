@@ -38,11 +38,14 @@ def plot_pressure_benchmark():
 
     # plot the data observations
     ax1.scatter(TIME_P, PRESSURE, color='r', marker = 'x', label ='Observations')
-    #ax1.axvline(t_ode[calibrationPointP], linestyle = '--', label = 'Calibration Point')
+    ax1.axvline(t_ode[calibrationPointP], linestyle = '--', label = 'Calibration Point')
 
     # plot the model solution
     ax1.plot(t_ode, p_ode, color = 'k', label = 'ODE')
-    ax1.set_title('ODE vs Data')
+    pars_formatted = []
+    for i in range(len(PARS_P)):
+        pars_formatted.append(np.format_float_scientific(PARS_P[i], precision = 3))
+    ax1.set_title('ODE vs Data \n a=%s b=%s c=%s'% (pars_formatted[0],pars_formatted[1],pars_formatted[2]))
     ax1.set_ylabel("Pressure(MPa)")
     ax1.set_xlabel("Year")
     ax1.legend()
