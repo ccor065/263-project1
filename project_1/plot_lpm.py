@@ -72,7 +72,7 @@ def plot_pressure_benchmark():
     pars_formatted = []
     for i in range(len(PARS_P)):
         pars_formatted.append(np.format_float_scientific(PARS_P[i], precision = 3))
-    ax2.set_title('ODE vs Analytical solution  \n a=%s b=%s c=%s'% (pars_formatted[0],pars_formatted[1],pars_formatted[2]))
+    ax2.set_title('ODE vs Analytical solution  \n a=%s b=%s c=%s q=4.00'% (pars_formatted[0],pars_formatted[1],pars_formatted[2]))
     ax2.legend()
     plt.savefig('model_vs_ODE_analytical_pressure.png',dpi=300)
     plt.show()
@@ -544,11 +544,11 @@ def plot_uncertainty_forecast(samples):
     for d, m0, a,b,c in samples:
         tm, pm = solve_pressure_ode(pressure_ode_model, TIME_P[0], PRESSURE[0], TIME_P[-1], STEP, [a, b, c])
 
-        ax1.plot(tm, pm, 'black', lw=0.3)
+        ax1.plot(tm, pm, 'black', alpha=0.2,lw=0.3)
 
         tc, cm = solve_conc_ode(conc_ODE_model, TIME_C[0],
                              CONC[0], TIME_C[-1], STEP, PRESSURE[0], [a, b, d, m0])
-        ax2.plot(tc, cm, 'black', lw=0.3)
+        ax2.plot(tc, cm, 'black',alpha=0.2, lw=0.3)
 
     ax1.axvline(tm[calibrationPointP], color='b', linestyle=':', label='Calibration Point')
     ax2.axvline(tc[calibrationPointC], color='b', linestyle=':', label='Calibration Point')
@@ -590,10 +590,10 @@ def plot_uncertainty_forecast(samples):
             t, p, c = get_p_conc_forecast(ts, pars_c, pars_p, pm[-1], cm[-1], q_net, q_newInj)
             p_finals[i, j] = p[-1]
             c_finals[i, j] = c[-1]
-            ax1.plot(t, p, color=colours[i], linewidth = 0.3)
-            ax2.plot(t, c, color=colours[i], linewidth = 0.3)
+            ax1.plot(t, p, color=colours[i],alpha= 0.2, linewidth = 1)
+            ax2.plot(t, c, color=colours[i], alpha= 0.2,linewidth = 1)
         j = j + 1
-    
+
     np.savetxt('final pressure uncertainty.csv', p_finals)
     np.savetxt('final conc uncertainty.csv', c_finals)
 
@@ -602,7 +602,10 @@ def plot_uncertainty_forecast(samples):
     ax2.set_title("Concentration C02wt%")
     ax1.set_title("Pressure MPa")
     fig.suptitle("30 Year Forecast for Ohaaki Geothermal Field")
-    ax2.legend(bbox_to_anchor=(1,1), loc="upper left")
+    leg_2 = ax2.legend()
+    for lh in leg_2.legendHandles:
+        leg_2.set_alpha(1)
+        ax2.legend(bbox_to_anchor=(1,1), loc="upper left")
     ax1.legend()
     ax1.set_xlabel("Time(year)")
     ax2.set_xlabel("Time(year)")
@@ -615,9 +618,9 @@ def plot_uncertainty_forecast(samples):
 
 if __name__ == "__main__":
     plot_pressure_benchmark()
-    #plot_conc_benchmark()
-    #plot_model_predictions()
+    plot_conc_benchmark()
+    plot_model_predictions()
     n_samples = 100
     samples = construct_all_samples(n_samples)
-    #plot_conc_pressure_uncertainty(samples)
-    #plot_uncertainty_forecast(samples)
+    plot_conc_pressure_uncertainty(samples)
+    plot_uncertainty_forecast(samples)
