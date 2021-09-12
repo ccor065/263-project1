@@ -42,7 +42,6 @@ def plot_pressure_benchmark():
 
     # plot the model solution
     ax1.plot(t_ode, p_ode, color = 'k', label = 'ODE')
-
     ax1.set_title('ODE vs Data')
     ax1.set_ylabel("Pressure(MPa)")
     ax1.set_xlabel("Year")
@@ -70,7 +69,7 @@ def plot_pressure_benchmark():
         pars_formatted.append(np.format_float_scientific(PARS_P[i], precision = 3))
     ax2.set_title('ODE vs Analytical solution  \n a=%s b=%s c=%s'% (pars_formatted[0],pars_formatted[1],pars_formatted[2]))
     ax2.legend()
-    plt.savefig('model_vs_ODE_analytical.png',dpi=300)
+    plt.savefig('model_vs_ODE_analytical_pressure.png',dpi=300)
     plt.show()
     """
     PLOT Convergence
@@ -110,7 +109,7 @@ def plot_pressure_benchmark():
     plt.xlabel('Time',fontsize=10)
 
     plt.title('Misfit ODE vs interpolated data')
-    plt.savefig('misfitModel_vs_data',dpi=300)
+    plt.savefig('misfitModel_vs_data_pressure',dpi=300)
     plt.show()
 
 # Conc Benchmarking PLotter
@@ -236,6 +235,8 @@ def plot_model_predictions():
 
     ax1.set_ylabel("Pressure MPa")
     ax2.set_ylabel("C02 Concentration (wt proportion)")
+    plt.savefig('forecast_no_uncertain',dpi=300)
+
     plt.show()
     return
 
@@ -433,7 +434,65 @@ def plot_samples2D(a, b, P, samples):
     # save and show
     plt.show()
 
+
+def plot_uncertainty_forecast():
+    fig, (ax1, ax2) = plt.subplots(1, 2)
+    fig.set_figwidth(13)
+    plt.subplots_adjust(None, None, 0.85 ,None, wspace=None, hspace=None)
+
+
+    # model
+    t_ode, p_ode = solve_pressure_ode(pressure_ode_model, TIME_P[0], PRESSURE[0], TIME_P[-1], STEP, PARS_P)
+    # plot the data observations
+    p1 = ax1.scatter(TIME_P, PRESSURE,color='k', s= 9, label = "Observations")
+    # plot the model solution
+    ax1.plot(t_ode, p_ode, color = 'r', label = "ODE model")
+    tc_ode, c_ode = solve_conc_ode(conc_ODE_model, TIME_C[0], CONC[0], TIME_C[-1], STEP, PRESSURE[0], PARS_C)
+    p2, = ax2.plot(tc_ode, c_ode, color = 'r', label = "ODE model")
+    ax2.scatter(TIME_C, CONC, color = 'k', s= 9, label ="Observations")
+
+    # Set up paramters for forecast
+    endTime = TIME_P[-1] + 30                     # 30 years projection
+    nt = int(np.ceil((endTime-TIME_P[-1])/STEP))	# compute number of Euler steps to take
+    ts = TIME_P[-1]+np.arange(nt+1)*STEP			# x array
+
+    t1, q_raw = load_production_data()
+    t2, co2_raw = load_injection_data()
+    q_prod = np.interp(ts, t1, q_raw)
+    q_inj = np.interp(ts, t2, co2_raw)
+
+    # stop injection
+    injRates = [0., 0.5, 1., 2., 4.] #different injection rate multipliers
+    colours = ['orange', 'green', 'red', 'blue', 'steelblue'] #for graph
+    labels = ['qc02 = 0.0 kg/s', 'qc02 = %.2f kg/s',  'qc02 = %.2f kg/s ','qc02 = %.2f kg/s ','qc02 = %.2f kg/s'] #for graph
+
+    for i in range(len(injRates)):
+        q_net = q_prod[-1] - (q_inj[-1])*injRates[i]
+        q_newInj = (q_inj[-1])*injRates[i]
+        t, p, c = get_p_conc_forecast(ts, PARS_C, PARS_P, p_ode[-1], c_ode[-1], q_net, q_newInj)
+        ax1.plot(t, p, color=colours[i])
+        ax2.plot(t, c, color=colours[i], label = labels[i] %(q_newInj))
+
+    ax2.axhline(0.10, linestyle = "--", color = 'grey', label = '10 wt% C02' )    #ax1.axvline(t_ode[calibrationPointP], linestyle = '--', label = 'Calibration Point')
+    ax1.axhline(PRESSURE[0], linestyle = "--", color = 'grey', label = 'Ambient Pressure P0')
+    ax2.set_title("Concentration C02wt%")
+    ax1.set_title("Pressure MPa")
+    plt.suptitle("30 Year Forecast for Ohaaki Geothermal Field")
+    ax2.legend(bbox_to_anchor=(1,1), loc="upper left")
+    ax1.legend()
+    ax1.set_xlabel("Time(year)")
+    ax2.set_xlabel("Time(year)")
+
+    ax1.set_ylabel("Pressure MPa")
+    ax2.set_ylabel("C02 Concentration (wt proportion)")
+    plt.savefig('forecast_uncertain',dpi=300)
+
+    plt.show()
+    return
+
 if __name__ == "__main__":
     #plot_pressure_benchmark()
     #plot_conc_benchmark()
-    plot_model_predictions()
+    #plot_model_predictions()
+
+    plot_uncertainty_forecast()
